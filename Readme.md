@@ -7,7 +7,8 @@ The assembly of the genome was generated prior to this pipeline [github falcon](
 ## Requirements
 The following tools are required:
 
-- 
+- trimmomatic v.0.36 [webpage]()
+- hisat2 v.2.0.5 [webpage](https://ccb.jhu.edu/software/hisat2/manual.shtml)
 
 ## Folder structure
 
@@ -60,3 +61,5 @@ The following tools are required:
 - [7 - Filtering](Pipeline/7_Filtering.md)
 - [8 - Renaming](Pipeline/8_Renaming.md)
 - [9 - Functional annotation](Pipeline/9_Functional_annotation.md)
+
+## References
