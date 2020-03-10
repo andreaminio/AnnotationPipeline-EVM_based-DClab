@@ -26,7 +26,7 @@
 ### 0.2.1.0.2 - Set WD
 
 ```bash
-cd 
+cd 2-Annotation/2_0-External_evidences/2_0_2-mRNAs/2_0_2_2-RNAseq/2_0_2_2_1-RNAseq_reads/
 ```
 
 0.2.1.1 - RNAseq reads mapping
