@@ -3,23 +3,31 @@
 
 ## 0.2.1.0 - Setup
 
-Define variables.
+### 0.2.1.0.1 - Define variables
 
-`out_dir`
+`out_dir` directory for filtered reads.
 
-`ref_index`
+`ref_index` genome hisat2 index.
 
-`fastq_1`
+`fastq_1` read 1 from paired-ends.
 
-`fastq2`
+`fastq_2` read 2 from paired-ends.
 
-`out_bam`
+`fastq` reads from single end.
 
-`n_cores`
+`out_bam` hisat2 alignment file name.
 
-`genome`
+`n_cores` number of cores.
 
-`mRNAs_fasta`
+`genome` genome fasta sequence.
+
+`mRNAs_fasta` mRNA evidences fasta file.
+
+### 0.2.1.0.2 - Set WD
+
+```bash
+cd 
+```
 
 0.2.1.1 - RNAseq reads mapping
 ------------------------------

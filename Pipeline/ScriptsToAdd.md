@@ -1,0 +1,13 @@
+- doFilter.PE.sh
+- doFilter.SR.sh
+- doMap.HISAT2.PE.sh
+- doMap.HISAT2.SR.sh
+- GFF_extract_features.py
+- reads_statistics.sh
+- getLengthFromFasta.py
+- check_pairs.py
+- mapGOs.py
+- filter_most_representative.py 
+- doFilter_bam.read_coverage_identity.py
+- GFF_RenameThemAll.py
+

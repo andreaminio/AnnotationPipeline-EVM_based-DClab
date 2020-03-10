@@ -1,15 +1,19 @@
-0.3.1 - IsoSeq reads extraction pipeline
+0.3.1 - IsoSeq reads extraction
 ========================================
 
 ## 0.3.1.0 - Setup
 
-Define variables.
+### 0.3.1.0.1 - Define variables
 
-`n_cores`
+`n_cores` number of cores.
 
-`sample`
+`sample` Iso-Seq sample name.
 
-`file`
+### 0.3.1.0.2 - Set WD
+
+```bash
+cd 2_0-External_evidences/2_0_2-mRNAs/2_0_2_3-IsoSeq/2_0_2_3_1-IsoSeq_reads/
+```
 
 0.3.1.1 - Full-Length Non-Chimeric reads extraction
 ---------------------------------------------------

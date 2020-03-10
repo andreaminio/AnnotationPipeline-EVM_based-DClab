@@ -3,13 +3,21 @@
 
 ## 0.2.2.0 - Setup
 
-Define variables.
+### 0.2.2.0.1 - Define variables
 
-`sample`
+`sample` name of the RNA-Seq sample.
 
-`name`
+`name` name of the genome.
 
-`n_cores`
+`n_cores` number of cores.
+
+`genome` genome fasta sequence.
+
+### 0.2.2.0.2 - Set WD
+
+```bash
+cd 2-Annotation/2_0-External_evidences/2_0_2-mRNAs/2_0_2_2-RNAseq/2_0_2_2_2-RNAseq_assembly
+```
 
 0.2.2.1 - Stringtie (on-genome reference based)
 -----------------------------------------------
@@ -164,12 +172,12 @@ GFF_extract_features.py -g $genome -a ${name}.trinity.dn.transdecoder.gff3 -p ${
 -   mRNA sequences
 
 ``` bash
-cp -v 2-Annotation/2_0-External_evidences/2_0_2-mRNAs/2_0_2_2-RNAseq/2_0_2_2_2-RNAseq_assembly/*.transdecoder.clean.mRNA.fasta 2-Annotation/2_4-IsoSeq/2_0-External_evidences/2_0_2-mRNAs/
+cp -v *.transdecoder.clean.mRNA.fasta ../../
 ```
 
 -   Proteins
 
 ``` bash
-cp -v 2-Annotation/2_0-External_evidences/2_0_2-mRNAs/2_0_2_2-RNAseq/2_0_2_2_2-RNAseq_assembly/*.transdecoder.clean.prot.fasta 2-Annotation/2_4-IsoSeq/2_0-External_evidences/2_0_1-Proteins/
+cp -v *.transdecoder.clean.prot.fasta ../../../2_0_1-Proteins/
 ```
 
