@@ -56,7 +56,7 @@ The following tools are required:
 - [4 - Ab initio prediction](Pipeline/4_Ab_initio_prediction.md)
 - [5 - Evidence alignment](Pipeline/5_Evidence_alignment.md)
 - [6 - Gene models consensus call (EVM)](Pipeline/6_Gene_models_consensus_call_(EVM).md)
-- [6.3a (optional) - Annotation polishing](Pipeline/63a_Annotation_polishing.md)
+  - [6.3a (optional) - Annotation polishing](Pipeline/63a_Annotation_polishing.md)
 - [7 - Filtering](Pipeline/7_Filtering.md)
 - [8 - Renaming](Pipeline/8_Renaming.md)
 - [9 - Functional annotation](Pipeline/9_Functional_annotation.md)
