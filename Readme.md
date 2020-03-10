@@ -1,11 +1,13 @@
 # Cantù Lab @ UC Davis - Annotation Pipeline - EVM based
 
-This Git repository contains all the procedure the annotation of an eukaryotic genome.
+This Git repository contains the whole pipeline used in the publications: [articles]().
 
-The prerequisites for the procedure are an assembled genome (obviously) and transcriptomic experimental evidences
+The assembly of the genome was generated prior to this pipeline [github falcon]().
 
 ## Requirements
-The following tools are required or necessary for the pipeline to be successful. 
+The following tools are required:
+
+- 
 
 ## Folder structure
 
