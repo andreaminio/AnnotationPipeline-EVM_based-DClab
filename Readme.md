@@ -3,6 +3,9 @@
 This Git repository contains the whole pipeline used to generate the structural and functional gene annotation of a grape genome. The pipeline for the assembly of the genome of interest is not included here but is a prerequisite.
 
 ## Requirements
+
+### Tools
+
 The following tools are required. Some options and compatibilities might depend on the software version. We successfully ran the pipeline using the versions described below.
 
 - [augustus v.3.0.3](http://bioinf.uni-greifswald.de/augustus/)
@@ -33,7 +36,9 @@ The following tools are required. Some options and compatibilities might depend 
 - [trimmomatic v.0.36](http://www.usadellab.org/cms/?page=trimmomatic)
 - [Trinity v.2.6.5](https://github.com/trinityrnaseq/trinityrnaseq/wiki)
 
-## Folder structure
+### Folder structure
+
+Most of the tools are assumed to be installed in the `PATH`. If not, the absolute `PATH` to the `Tools` directory is given.
 
 ```bash
 2-Annotation
@@ -80,7 +85,6 @@ The following tools are required. Some options and compatibilities might depend 
 - [4 - Ab initio prediction](Pipeline/4_Ab_initio_prediction.md)
 - [5 - Evidence alignment](Pipeline/5_Evidence_alignment.md)
 - [6 - Gene models consensus call (EVM)](Pipeline/6_Gene_models_consensus_call_(EVM).md)
-  - [6.3a (optional) - Annotation polishing](Pipeline/63a_Annotation_polishing.md)
 - [7 - Filtering](Pipeline/7_Filtering.md)
 - [8 - Renaming](Pipeline/8_Renaming.md)
 - [9 - Functional annotation](Pipeline/9_Functional_annotation.md)
