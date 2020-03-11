@@ -24,7 +24,7 @@ The following tools are required:
 - [IsoSeq v.3](https://github.com/PacificBiosciences/IsoSeq)
 - [LSC]()
 - [magicblast v.1.4.0](https://ncbi.github.io/magicblast/)
-- [maker]([https://www.yandell-lab.org/software/maker.html])
+- [maker](https://www.yandell-lab.org/software/maker.html)
 - [parallel](https://www.gnu.org/software/parallel/)
 - [PASA v.2.3.3](https://github.com/PASApipeline/PASApipeline/wiki)
 - [RepeatMasker v.open-4.0.6](http://www.repeatmasker.org/)
