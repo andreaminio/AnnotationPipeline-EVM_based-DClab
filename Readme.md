@@ -1,35 +1,33 @@
 # Cantù Lab @ UC Davis - Annotation Pipeline - EVM based
 
-This Git repository contains the whole pipeline used in the publications: [articles]().
-
-The assembly of the genome was generated prior to this pipeline [github falcon]().
+This Git repository contains the whole pipeline used to generate the structural and functional gene annotation of a grape genome. The pipeline for the assembly of the genome of interest is not included here but is a prerequisite.
 
 ## Requirements
-The following tools are required:
+The following tools are required. Some options and compatibilities might depend on the software version. We successfully ran the pipeline using the versions described below.
 
 - [augustus v.3.0.3](http://bioinf.uni-greifswald.de/augustus/)
-- [bedtools](https://bedtools.readthedocs.io/en/latest/)
+- [bedtools v.2.26.0](https://bedtools.readthedocs.io/en/latest/) 
 - [BLAST v.2.6.0+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 - [Blast2GO](https://www.blast2go.com/)
 - [BLAT v.36x2](https://genome.ucsc.edu/FAQ/FAQblat.html)
-- [busco](https://busco.ezlab.org/)
+- [busco v.3.0.2](https://busco.ezlab.org/)
 - [EVidenceModeler v.1.1.1](https://evidencemodeler.github.io/)
 - [exonerate v.2.2.0](https://www.ebi.ac.uk/about/vertebrate-genomics/software/exonerate-manual)
-- [fastqc](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
-- [genemark](http://exon.gatech.edu/GeneMark/)
-- [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml)
+- [fastqc v.0.10.1](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+- [genemark v.3.47](http://exon.gatech.edu/GeneMark/)
+- [gffcompare v.0.10.1](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml)
 - [gffread](http://ccb.jhu.edu/software/stringtie/gff.shtml)
 - [gmap v.2015-09-29](http://research-pub.gene.com/gmap/)
 - [hisat2 v.2.0.5](https://ccb.jhu.edu/software/hisat2/manual.shtml)
 - [IsoSeq v.3](https://github.com/PacificBiosciences/IsoSeq)
-- [LSC]()
+- [LSC v.2.0](http://augroup.org/LSC/LSC)
 - [magicblast v.1.4.0](https://ncbi.github.io/magicblast/)
-- [maker](https://www.yandell-lab.org/software/maker.html)
+- [maker v.2.31.9](https://www.yandell-lab.org/software/maker.html)
 - [parallel](https://www.gnu.org/software/parallel/)
 - [PASA v.2.3.3](https://github.com/PASApipeline/PASApipeline/wiki)
 - [RepeatMasker v.open-4.0.6](http://www.repeatmasker.org/)
-- [samtools](http://www.htslib.org/)
-- [SNAP](https://github.com/KorfLab/SNAP)
+- [samtools v.1.7](http://www.htslib.org/)
+- [SNAP v.2006-07-28](https://github.com/KorfLab/SNAP)
 - [stringtie v.1.3.4d](https://ccb.jhu.edu/software/stringtie/)
 - [TransDecoder v.3.0.1](https://github.com/TransDecoder/TransDecoder/wiki)
 - [trimmomatic v.0.36](http://www.usadellab.org/cms/?page=trimmomatic)
