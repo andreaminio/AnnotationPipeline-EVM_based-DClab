@@ -1,6 +1,6 @@
 # Cantù Lab @ UC Davis - Annotation Pipeline - EVM based
 
-This Git repository contains the whole pipeline used to generate the structural and functional gene annotation of a grape genome. The pipeline for the assembly of the genome of interest is not included here but is a prerequisite.
+> This Git repository contains the whole pipeline used to generate the structural and functional gene annotation of a grape genome. The pipeline for the assembly of the genome of interest is not included here but is a prerequisite.
 
 ## Requirements
 
