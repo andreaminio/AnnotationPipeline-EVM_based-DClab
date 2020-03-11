@@ -7,8 +7,33 @@ The assembly of the genome was generated prior to this pipeline [github falcon](
 ## Requirements
 The following tools are required:
 
-- [trimmomatic v.0.36](http://www.usadellab.org/cms/?page=trimmomatic)
+- [augustus v.3.0.3](http://bioinf.uni-greifswald.de/augustus/)
+- [bedtools](https://bedtools.readthedocs.io/en/latest/)
+- [BLAT v.36x2](https://genome.ucsc.edu/FAQ/FAQblat.html)
+- [BLAST v.2.6.0+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
+- [Blast2GO](https://www.blast2go.com/)
+- [busco](https://busco.ezlab.org/)
+- [EVidenceModeler v.1.1.1](https://evidencemodeler.github.io/)
+- [exonerate v.2.2.0](https://www.ebi.ac.uk/about/vertebrate-genomics/software/exonerate-manual)
+- [fastqc](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+- [genemark](http://exon.gatech.edu/GeneMark/)
+- [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml)
+- [gffread](http://ccb.jhu.edu/software/stringtie/gff.shtml)
+- [gmap v.2015-09-29](http://research-pub.gene.com/gmap/)
 - [hisat2 v.2.0.5](https://ccb.jhu.edu/software/hisat2/manual.shtml)
+- [IsoSeq v.3](https://github.com/PacificBiosciences/IsoSeq)
+- [LSC]()
+- [magicblast v.1.4.0](https://ncbi.github.io/magicblast/)
+- [maker]([https://www.yandell-lab.org/software/maker.html])
+- [parallel](https://www.gnu.org/software/parallel/)
+- [PASA v.2.3.3](https://github.com/PASApipeline/PASApipeline/wiki)
+- [RepeatMasker v.open-4.0.6](http://www.repeatmasker.org/)
+- [samtools](http://www.htslib.org/)
+- [SNAP](https://github.com/KorfLab/SNAP)
+- [stringtie v.1.3.4d](https://ccb.jhu.edu/software/stringtie/)
+- [TransDecoder v.3.0.1](https://github.com/TransDecoder/TransDecoder/wiki)
+- [trimmomatic v.0.36](http://www.usadellab.org/cms/?page=trimmomatic)
+- [Trinity v.2.6.5](https://github.com/trinityrnaseq/trinityrnaseq/wiki)
 
 ## Folder structure
 
