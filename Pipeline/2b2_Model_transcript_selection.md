@@ -29,7 +29,7 @@ blastp -db RefSeq_Plants.protein.faa -query IsoSeq_training_PASA.sqlite.assembli
 Extract alignments identity, coverage, and description, then check the distribution at increasing identity and coverage theresholds.
 
 ``` bash
-python mapGOs.py -m refseq2go.txt tmp.protein.to.RefSeq_Plants.xml | awk -F "\t" 'BEGIN {OFS="\t"; OFS="\t"; print "Query","Q_len","Q_start","Q_stop","|","Target","T_len","T_start","T_stop","|","e-value","Matches","Mismatches","Gaps","Iden","Q_cov","T_cov","|","Description","|","GO"} {print $1,$23,$7,$8,"|",$2,$24,$9,$10,"|",$11,$4,$5,$6,$3,100*($4/$23),100*($4/$24),"|",$25,"|",$26}' > tmp.protein.to.RefSeq_Plants.tab
+python /Scripts/mapGOs.py -m refseq2go.txt tmp.protein.to.RefSeq_Plants.xml | awk -F "\t" 'BEGIN {OFS="\t"; OFS="\t"; print "Query","Q_len","Q_start","Q_stop","|","Target","T_len","T_start","T_stop","|","e-value","Matches","Mismatches","Gaps","Iden","Q_cov","T_cov","|","Description","|","GO"} {print $1,$23,$7,$8,"|",$2,$24,$9,$10,"|",$11,$4,$5,$6,$3,100*($4/$23),100*($4/$24),"|",$25,"|",$26}' > tmp.protein.to.RefSeq_Plants.tab
 ```
 
 Find annotated models corresponding to to potential transposases and remove them from the set.
@@ -50,7 +50,7 @@ grep -wFf tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.tab IsoSeq_trainin
 Align all-vs-all the good proteins.
 
 ``` bash
-getFastaFromIds.py tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.tab IsoSeq_training_PASA.sqlite.assemblies.fasta.transdecoder.pep > tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta
+python /Scripts/getFastaFromIds.py tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.tab IsoSeq_training_PASA.sqlite.assemblies.fasta.transdecoder.pep > tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta
 
 makeblastdb -in tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta -dbtype prot 
 
@@ -62,13 +62,13 @@ Obtain meaningful pairs (coverage ≥ 95% and ≥95%), clusterize them and keep 
 ``` bash
 less -S tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_blast.tab | grep -v '^#' |awk -F "\t" 'BEGIN {OFS="\t"} {print $1,$7,100*($12/$8),100*($13/$8)}' | awk '$3>=95 && $4>=95' > tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_blast.iden_cov.ge95.txt
 
-python filter_most_representative.py tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_blast.iden_cov.ge95.txt > tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_blast.iden_cov.ge95.representatives 2> tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_blast.iden_cov.ge95.clusters
+python /Scripts/filter_most_representative.py tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_blast.iden_cov.ge95.txt > tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_blast.iden_cov.ge95.representatives 2> tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_blast.iden_cov.ge95.clusters
 
 grep -wFf tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_blast.iden_cov.ge95.representatives tmp.IsoSeq_training_PASA.sqlite.gene_models.gff3 | awk '$3=="CDS" || $3=="mRNA"' | sed '/\tmRNA\t/ s:\(.*\)mRNA\(.*ID=\)\(.*Parent=\)\(.*\):\1gene\2\4\n\1mRNA\2\3\4:' | sed '/\tCDS\t/ s:\(.*\)CDS\(.*\)Parent=\(.*\);ID=\(.*\)cds\(.*\):\1exon\2Parent=\3;ID=\4exon\5\n\1CDS\2Parent=\3;ID=\4cds\5:' > tmp.${name}.no_redundant.gene_models.gff3
 ```
 
 ``` bash
-GFF_extract_features.py -g $genome -a tmp.${name}.no_redundant.gene_models.gff3 -p tmp.${name}.no_redundant.clean.gene_models -nlcmi > log
+python /Scripts/GFF_extract_features.py -g $genome -a tmp.${name}.no_redundant.gene_models.gff3 -p tmp.${name}.no_redundant.clean.gene_models -nlcmi > log
 ```
 
 2.b.2.3 - SNAP validation of exon structures
@@ -107,5 +107,5 @@ Remove models not passing validation and clean dataset.
 ``` bash
 grep -vFf tmp.${name}.no_redundant.clean.models_to_remove.txt tmp.${name}.no_redundant.clean.gene_models.gff3  > tmp.${name}.no_redundant.clean.pass.gene_models.gff3
 
-GFF_extract_features.py -g $genome -a tmp.${name}.no_redundant.clean.pass.gene_models.gff3 -p ${name}.gene_models_for_training -in > log
+python /Scripts/GFF_extract_features.py -g $genome -a tmp.${name}.no_redundant.clean.pass.gene_models.gff3 -p ${name}.gene_models_for_training -in > log
 ```

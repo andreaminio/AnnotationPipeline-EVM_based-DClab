@@ -44,6 +44,7 @@ Filter out unwanted models and correct GFF3 file.
 
 ``` bash
 grep -vFf <(less to_remove.txt | cut -f 2 | sed '1,1d' ) gene_models.gff3  > gene_models.filtered.gff3
-nohup GFF_extract_features.py -a gene_models.filtered.gff3 -g $genome -p gene_models.filtered -lscin > gene_models.filtered.log 2> gene_models.filtered.err &
+
+python /Scripts/GFF_extract_features.py -a gene_models.filtered.gff3 -g $genome -p gene_models.filtered -lscin > gene_models.filtered.log 2> gene_models.filtered.err
 ```
 

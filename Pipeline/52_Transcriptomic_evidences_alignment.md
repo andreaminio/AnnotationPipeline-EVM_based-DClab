@@ -163,7 +163,7 @@ Run Megablast mapping.
 Filter alignments keeping only the ones with coverage \>70% and identity \>70%.
 
 ``` bash
-python doFilter_bam.read_coverage_identity.py -s transcript_alignment.magicblast.mapped.sam -o transcript_alignment.magicblast.mapped.filtered.sam -c 70 -i 70 2> filtering.log
+python /Scripts/doFilter_bam.read_coverage_identity.py -s transcript_alignment.magicblast.mapped.sam -o transcript_alignment.magicblast.mapped.filtered.sam -c 70 -i 70 2> filtering.log
 ```
 
 Convert file to alignment gff3 format.

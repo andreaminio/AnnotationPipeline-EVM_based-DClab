@@ -37,7 +37,7 @@ cd 2-Annotation/2_0-External_evidences/2_0_2-mRNAs/2_0_2_2-RNAseq/2_0_2_2_1-RNAs
 -   Paired-end reads
 
 ``` bash
-doFilter.PE.sh $out_dir
+bash /Scripts/doFilter.PE.sh $out_dir
 ```
 
 Will run on all pairs of reads in the folder where run and will put the 4 output files for each pair in `$out_dir`.
@@ -45,7 +45,7 @@ Will run on all pairs of reads in the folder where run and will put the 4 output
 -   Single reads
 
 ``` bash
-doFilter.SR.sh $out_dir
+bash /Scripts/doFilter.SR.sh $out_dir
 ```
 
 Will run on all FASTQ files of reads in the folder separately and will put the the corresponding output files in `$out_dir`.
@@ -55,13 +55,13 @@ Will run on all FASTQ files of reads in the folder separately and will put the t
 -   Paired-end reads
 
 ``` bash
-doMap.HISAT2.PE.sh $ref_index $fastq_1 $fastq_2 $out_bam $n_cores
+bash /Scripts/doMap.HISAT2.PE.sh $ref_index $fastq_1 $fastq_2 $out_bam $n_cores
 ```
 
 -   Single reads
 
 ``` bash
-doMap.HISAT2.SR.sh $ref_index $fastq $out_bam $n_cores
+bash /Scripts/doMap.HISAT2.SR.sh $ref_index $fastq $out_bam $n_cores
 ```
 
 0.2.1.2 - mRNA/cDNA/ESTs/CDSs mapping

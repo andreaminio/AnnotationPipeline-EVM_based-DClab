@@ -40,5 +40,5 @@ Run the training.
 Save a copy of the model in the local directory as by default is stored in Augustus database.
 
 ``` bash
-rsync -av Tools/augustus-3.0.3/config/species/$name .
+rsync -av /Tools/augustus-3.0.3/config/species/$name .
 ```

@@ -89,7 +89,7 @@ find $(pwd) -regex ".*evm.out.gff3" -exec cat {} \; > EVM.all.gff3
 Filter calls of broken models generate filtered annotations and sequences.
 
 ``` bash
-GFF_extract_features.py -l -c -i -n -p EVM.filtered -a EVM.all.gff3 -g $genome > EVM.filtering.log
+python /Scripts/GFF_extract_features.py -l -c -i -n -p EVM.filtered -a EVM.all.gff3 -g $genome > EVM.filtering.log
 ```
 
 6.3 - Postprocessing
@@ -232,13 +232,13 @@ Export updated model annotation.
 Rename gene models.
 
 ``` bash
-GFF_RenameThemAll.py polished_PASA 00 NN polishing_PASA.sqlite.gene_structures_post_PASA_updates.gff3 > polishing_PASA.sqlite.gene_structures_post_PASA_updates.renamed.gff3 2>renaming.err &
+python /Scripts/GFF_RenameThemAll.py polished_PASA 00 NN polishing_PASA.sqlite.gene_structures_post_PASA_updates.gff3 > polishing_PASA.sqlite.gene_structures_post_PASA_updates.renamed.gff3 2>renaming.err &
 ```
 
 Run GFF\_extractor.py.
 
 ``` bash
-GFF_extract_features.py -p EVM.filtered.polished.clean -a polishing_PASA.sqlite.gene_structures_post_PASA_updates.renamed.gff3 -g $genome > EVM.filtered.polished.cleaning.log
+python /Scripts/GFF_extract_features.py -p EVM.filtered.polished.clean -a polishing_PASA.sqlite.gene_structures_post_PASA_updates.renamed.gff3 -g $genome > EVM.filtered.polished.cleaning.log
 ```
 
 #### 6.3a.3 - Move to filtering

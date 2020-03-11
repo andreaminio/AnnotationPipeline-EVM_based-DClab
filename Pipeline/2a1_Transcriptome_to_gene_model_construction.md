@@ -60,6 +60,6 @@ Port CDSs coordinates from transcripts to genome.
 Filter out transcripts without a good ORF (no met to start, premature stop codons).
 
 ```bash
-GFF_extract_features.py -g $genome -a mRNAs.on.genome.cov_iden_g80.transdecoder.gff3 -p mRNAs.on.genome.cov_iden_g80.transdecoder.clean 2> mRNAs.on.genome.cov_iden_g80.transdecoder.clean.log
+python /Scripts/GFF_extract_features.py -g $genome -a mRNAs.on.genome.cov_iden_g80.transdecoder.gff3 -p mRNAs.on.genome.cov_iden_g80.transdecoder.clean 2> mRNAs.on.genome.cov_iden_g80.transdecoder.clean.log
 ```
 

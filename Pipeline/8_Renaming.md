@@ -22,7 +22,7 @@ cd 2-Annotation/2_2-Prediction/2_2_8-Filtering/
 Generate gene annotation with updated nomenclature.
 
 ``` bash
-GFF_RenameThemAll.py $new_name $version V gene_models.filtered.gff3 > gene_models.filtered.renamed.gff3 2> gene_models.filtered.renaming.log
+python /Scripts/GFF_RenameThemAll.py $new_name $version V gene_models.filtered.gff3 > gene_models.filtered.renamed.gff3 2> gene_models.filtered.renaming.log
 ```
 
 Correct names in both GFF3 and conversion log file.

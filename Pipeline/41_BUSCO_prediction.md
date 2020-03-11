@@ -33,7 +33,7 @@ export AUGUSTUS_CONFIG_PATH=/Tools/augustus-3.0.3/config/
 Run BUSCO on genome.
 
 ``` bash
-python run_BUSCO.py -i $genome  -o genome -l /Tools/busco/db/embryophyta_odb9/ -m genome -c $n_cores
+python /Scripts/run_BUSCO.py -i $genome  -o genome -l /Tools/busco/db/embryophyta_odb9/ -m genome -c $n_cores
 ```
 
 Extract Augustus predictions on BUSCO gene models.

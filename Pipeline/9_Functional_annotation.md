@@ -20,7 +20,7 @@ cd 2-Annotation/2_2-Prediction/2_2_9-Functional_annotation/
 Generate final annotation file, fasta files and statistics.
 
 ``` bash
-GFF_extract_features.py -g $genome -a ${name}.gff3 -p ${name} -o > log 2> err
+python /Scripts/GFF_extract_features.py -g $genome -a ${name}.gff3 -p ${name} -o > log 2> err
 ```
 
 Setup.
@@ -53,7 +53,7 @@ parallel -j 8 :::: interpro_commands.sh > interpro.log
 ```
 
 ``` bash
-find blast | grep 'xml$' | sort | sed 's:\(.*\):python mapGOs.py -m refseq2go.txt \1 > \1.tab' > GOcommand.sh
+find blast | grep 'xml$' | sort | sed 's:\(.*\):python /Scripts/mapGOs.py -m refseq2go.txt \1 > \1.tab' > GOcommand.sh
 
 parallel -j 8 :::: GOcommand.sh > GOcommand.log
 

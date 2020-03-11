@@ -50,7 +50,7 @@ perl /Tools/TransDecoder-3.0.1/util/cufflinks_gtf_to_alignment_gff3.pl ${name}.s
 Filter models with broken ORFs (no met at start, premature stop codons).
 
 ``` bash
-GFF_extract_features.py -g $genome -a ${name}.stringtie.transdecoder.gff3 -p ${name}.stringtie.transdecoder.clean > ${name}.stringtie.transdecoder.clean.log
+python /Scripts/GFF_extract_features.py -g $genome -a ${name}.stringtie.transdecoder.gff3 -p ${name}.stringtie.transdecoder.clean > ${name}.stringtie.transdecoder.clean.log
 ```
 
 0.2.2.2 - Trinity on-genome (on-genome de novo)
@@ -67,6 +67,7 @@ Run Trinity on reads alignments of each sample.
 
 ``` bash
 $TRINITY --max_memory 95G --CPU $n_cores --genome_guided_bam ${sample}_on_${name}.bam --genome_guided_max_intron 15000 --min_contig_length 200 --normalize_max_read_cov 30 --jaccard_clip --output Trinity_OnGenome_${sample} 2>&1 > Trinity_OnGenome_${sample}.trinity_log.txt
+
 cat Trinity_OnGenome_${sample}/Trinity-GG.fasta | sed 's: .*::;s:>:>'${sample}'-:' > ${sample}.trinity.og.fasta
 ```
 
@@ -107,7 +108,7 @@ cat ${name}.trinity.og.on.genome.cov_iden_g95.fasta.transdecoder.gff3 | awk '$7!
 Filter models with broken ORFs (no met at start, premature stop codons).
 
 ``` bash
-GFF_extract_features.py -g $genome -a ${name}.trinity.og.transdecoder.gff3 -p ${name}.trinity.og.transdecoder.clean 2> ${name}.trinity.og.transdecoder.clean.log
+python /Scripts/GFF_extract_features.py -g $genome -a ${name}.trinity.og.transdecoder.gff3 -p ${name}.trinity.og.transdecoder.clean 2> ${name}.trinity.og.transdecoder.clean.log
 ```
 
 0.2.2.3 - Trinity (de novo)
@@ -163,7 +164,7 @@ cat ${name}.trinity.dn.on.genome.cov_iden_g95.fasta.transdecoder.gff3 | awk '$7!
 Filter out results of transcripts with broken ORFs (no met at start, premature stop codons).
 
 ``` bash
-GFF_extract_features.py -g $genome -a ${name}.trinity.dn.transdecoder.gff3 -p ${name}.trinity.dn.transdecoder.clean 2> ${name}.trinity.dn.transdecoder.clean.log
+python /Scripts/GFF_extract_features.py -g $genome -a ${name}.trinity.dn.transdecoder.gff3 -p ${name}.trinity.dn.transdecoder.clean 2> ${name}.trinity.dn.transdecoder.clean.log
 ```
 
 0.2.2.4 - Export useful files
