@@ -9,9 +9,9 @@ The following tools are required:
 
 - [augustus v.3.0.3](http://bioinf.uni-greifswald.de/augustus/)
 - [bedtools](https://bedtools.readthedocs.io/en/latest/)
-- [BLAT v.36x2](https://genome.ucsc.edu/FAQ/FAQblat.html)
 - [BLAST v.2.6.0+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 - [Blast2GO](https://www.blast2go.com/)
+- [BLAT v.36x2](https://genome.ucsc.edu/FAQ/FAQblat.html)
 - [busco](https://busco.ezlab.org/)
 - [EVidenceModeler v.1.1.1](https://evidencemodeler.github.io/)
 - [exonerate v.2.2.0](https://www.ebi.ac.uk/about/vertebrate-genomics/software/exonerate-manual)
