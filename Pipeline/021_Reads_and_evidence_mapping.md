@@ -1,6 +1,8 @@
 0.2.1 - Reads and evidence mapping
 ==================================
 
+{:toc}
+
 ## 0.2.1.0 - Setup
 
 ### 0.2.1.0.1 - Define variables
