@@ -115,6 +115,8 @@ The following tools are required:
 
 **Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, 1000 Genome Project Data Processing Subgroup** (2009) The Sequence Alignment/Map format and SAMtools. Bioinformatics **25**: 2078–2079
 
+**Lomsadze A** (2005) Gene identification in novel eukaryotic genomes by self-training algorithm. Nucleic Acids Research **33**: 6494–6506
+
 **Pertea M, Pertea GM, Antonescu CM, Chang T-C, Mendell JT, Salzberg SL** (2015) StringTie enables improved reconstruction of a transcriptome from RNA-seq reads. Nat Biotechnol **33**: 290–295
 
 **Quinlan AR, Hall IM** (2010) BEDTools: a flexible suite of utilities for comparing genomic features. Bioinformatics **26**: 841–842
