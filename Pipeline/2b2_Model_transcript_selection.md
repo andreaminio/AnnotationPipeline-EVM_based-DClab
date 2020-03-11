@@ -79,16 +79,16 @@ Convert GFF3 files to ZFF format.
 ``` bash
 cat <(cat tmp.${name}.no_redundant.clean.gene_models.gff3 ; echo "#FASTA" ; cat $genome) > tmp.${name}.no_redundant.clean.gene_models.SNAP.gff3
 
-maker2zff -n tmp.${name}.no_redundant.clean.gene_models.SNAP.gff3 2> /dev/null
+/Tools/maker-2.31.9/bin/maker2zff -n tmp.${name}.no_redundant.clean.gene_models.SNAP.gff3 2> /dev/null
 rm genome.dna
 
-for id in $(grep '^>' genome.ann | sed 's:>::'); do echo $id; /DATA7/Resources/Scripts/getFastaFromIds.py <(echo $id) $genome | sed 's/.\{60\}/&\n/g' >> genome.dna ; done
+for id in $(grep '^>' genome.ann | sed 's:>::'); do echo $id; getFastaFromIds.py <(echo $id) $genome | sed 's/.\{60\}/&\n/g' >> genome.dna ; done
 ```
 
 Validate file.
 
 ``` bash
-fathom genome.ann genome.dna -validate > validate.log 2>validate.err
+/Tools/snap/fathom genome.ann genome.dna -validate > validate.log 2>validate.err
 ```
 
 Find genes corresponding to models with errors.

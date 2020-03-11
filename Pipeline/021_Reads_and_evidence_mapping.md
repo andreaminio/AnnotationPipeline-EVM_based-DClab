@@ -98,6 +98,6 @@ Convert the filtered file a gff3 alignment format and extract the mRNA sequences
 ``` bash
 gffread -g $genome -w mRNAs.on.genome.cov_iden_g80.fasta -o - -T mRNAs.on.genome.cov_iden_g80.gff3 > mRNAs.on.genome.cov_iden_g80.gtf
 
-perl cufflinks_gtf_to_alignment_gff3.pl mRNAs.on.genome.cov_iden_g80.gtf > mRNAs.on.genome.cov_iden_g80.alignment.gff3
+perl /Tools/TransDecoder-3.0.1/util/cufflinks_gtf_to_alignment_gff3.pl mRNAs.on.genome.cov_iden_g80.gtf > mRNAs.on.genome.cov_iden_g80.alignment.gff3
 ```
 

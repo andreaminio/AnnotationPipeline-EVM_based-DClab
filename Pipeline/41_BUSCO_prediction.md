@@ -23,8 +23,8 @@ cd 2-Annotation/2_2-Prediction/2_2_3-Prediction/2_2_3_1-BUSCO/
 mkdir 2_3_1-BUSCO 
 cd 2_3_1-BUSCO
 
-export PATH=~/Assembly_tools/Tools/augustus-3.0.3/:$PATH
-export AUGUSTUS_CONFIG_PATH=~/Assembly_tools/Tools/augustus-3.0.3/config/
+export PATH=/Tools/augustus-3.0.3/:$PATH
+export AUGUSTUS_CONFIG_PATH=/Tools/augustus-3.0.3/config/
 ```
 
 4.1.1 - Predict
@@ -33,7 +33,7 @@ export AUGUSTUS_CONFIG_PATH=~/Assembly_tools/Tools/augustus-3.0.3/config/
 Run BUSCO on genome.
 
 ``` bash
-python run_BUSCO.py -i $genome  -o genome -l /data/tmp_tools/busco/db/embryophyta_odb9/ -m genome -c $n_cores
+python run_BUSCO.py -i $genome  -o genome -l /Tools/busco/db/embryophyta_odb9/ -m genome -c $n_cores
 ```
 
 Extract Augustus predictions on BUSCO gene models.

@@ -44,9 +44,9 @@ cp ${name}.trinity.dn.transdecoder.clean.mRNA.fasta ${name}.trinity.dn.transdeco
 Identify CDS regions in the sequences extracted from mRNA alignments.
 
 ```bash
-TransDecoder.LongOrfs -t mRNAs.on.genome.cov_iden_g80.fasta
+/Tools/TransDecoder-3.0.1/TransDecoder.LongOrfs -t mRNAs.on.genome.cov_iden_g80.fasta
 
-TransDecoder.Predict --cpu $n_cores -t mRNAs.on.genome.cov_iden_g80.fasta
+/Tools/TransDecoder-3.0.1/TransDecoder.Predict --cpu $n_cores -t mRNAs.on.genome.cov_iden_g80.fasta
 
 cat mRNAs.on.genome.cov_iden_g80.fasta.transdecoder.gff3 | awk '$7!="-"' >mRNAs.on.genome.cov_iden_g80.fasta.transdecoder.no_minus.gff3
 ```
@@ -54,7 +54,7 @@ cat mRNAs.on.genome.cov_iden_g80.fasta.transdecoder.gff3 | awk '$7!="-"' >mRNAs.
 Port CDSs coordinates from transcripts to genome.
 
 ```bash
-cdna_alignment_orf_to_genome_orf.pl mRNAs.on.genome.cov_iden_g80.fasta.transdecoder.no_minus.gff3 mRNAs.on.genome.cov_iden_g80.alignment.gff3 mRNAs.on.genome.cov_iden_g80.fasta > mRNAs.on.genome.cov_iden_g80.transdecoder.gff3
+/Tools/TransDecoder-3.0.1/cdna_alignment_orf_to_genome_orf.pl mRNAs.on.genome.cov_iden_g80.fasta.transdecoder.no_minus.gff3 mRNAs.on.genome.cov_iden_g80.alignment.gff3 mRNAs.on.genome.cov_iden_g80.fasta > mRNAs.on.genome.cov_iden_g80.transdecoder.gff3
 ```
 
 Filter out transcripts without a good ORF (no met to start, premature stop codons).

@@ -24,8 +24,8 @@ mkdir fasta
 mkdir gff3
 mkdir logs
 
-export PATH=~/Assembly_tools/Tools/augustus-3.0.3/:$PATH
-export AUGUSTUS_CONFIG_PATH=~/Assembly_tools/Tools/augustus-3.0.3/config/
+export PATH=/Tools/augustus-3.0.3/:$PATH
+export AUGUSTUS_CONFIG_PATH=/Tools/augustus-3.0.3/config/
 
 model=$name
 ```

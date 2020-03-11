@@ -42,7 +42,7 @@ cp blast_commands.sh interpro_commands.sh
 
 sed -i 's:\(.*\):blastp -num_threads 6 -db RefSeq_Plants.protein.faa -show_gis -outfmt 5 -query fasta/\1.fasta > blast/\1.xml:' blast_commands.sh 
 
-sed -i 's:\(.*\):\interproscan.sh --goterms -f XML,gff3 -i fasta/\1.fasta -b interpro/\1:' interpro_commands.sh
+sed -i 's:\(.*\):\/Tools/interproscan-5.28-67.0/interproscan.sh --goterms -f XML,gff3 -i fasta/\1.fasta -b interpro/\1:' interpro_commands.sh
 ```
 
 Run in parallel blast and interpro commands.
@@ -53,7 +53,7 @@ parallel -j 8 :::: interpro_commands.sh > interpro.log
 ```
 
 ``` bash
-find blast | grep 'xml$' | sort | sed 's:\(.*\):python /DATA/users/aminio/mapGOs.py -m /DATA/users/aminio/refseq2go.txt \1 > \1.tab' > GOcommand.sh
+find blast | grep 'xml$' | sort | sed 's:\(.*\):python mapGOs.py -m refseq2go.txt \1 > \1.tab' > GOcommand.sh
 
 parallel -j 8 :::: GOcommand.sh > GOcommand.log
 

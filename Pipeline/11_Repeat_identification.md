@@ -34,6 +34,6 @@ cat *.out.gff3 | sed '/^#/d' > ../2_2_6-EVM/repeats.gff3
 -----------------------------
 
 ``` bash
-/DATA7/Resources/Tools/RepeatMasker/util/buildSummary.pl $FASTA.out > $FASTA.out.stats
+/Tools/RepeatMasker/util/buildSummary.pl $FASTA.out > $FASTA.out.stats
 ```
 

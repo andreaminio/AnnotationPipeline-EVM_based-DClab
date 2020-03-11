@@ -25,26 +25,26 @@ cd 2-Annotation/2_0-External_evidences/2_0_2-mRNAs/2_0_2_2-RNAseq/2_0_2_2_2-RNAs
 Run Stringtie from reads alignments of each sample separately.
 
 ``` bash
-stringtie ${sample}_on_${name}.bam -p $n_cores -v -l STRG_${sample}_on_${name} -o ${sample}_on_${name}.stringtie.gtf -A ${sample}_on_${name}.stringtie.abundance.txt 2> err | tee log
+/Tools/stringtie-1.3.4d.Linux_x86_64/stringtie ${sample}_on_${name}.bam -p $n_cores -v -l STRG_${sample}_on_${name} -o ${sample}_on_${name}.stringtie.gtf -A ${sample}_on_${name}.stringtie.abundance.txt 2> err | tee log
 ```
 
 If multiple samples are present, merge the results.
 
 ``` bash
-stringtie --merge -o ${name}.stringtie.gtf -i -l STRG.${name} *_on_${name}.stringtie.gtf
+/Tools/stringtie-1.3.4d.Linux_x86_64/stringtie --merge -o ${name}.stringtie.gtf -i -l STRG.${name} *_on_${name}.stringtie.gtf
 ```
 
 Find ORFs in stringtie models.
 
 ``` bash
-perl cufflinks_gtf_genome_to_cdna_fasta.pl ${name}.stringtie.gtf $genome > ${name}.stringtie.exon.fasta
+perl /Tools/TransDecoder-3.0.1/util/cufflinks_gtf_genome_to_cdna_fasta.pl ${name}.stringtie.gtf $genome > ${name}.stringtie.exon.fasta
 
-perl cufflinks_gtf_to_alignment_gff3.pl ${name}.stringtie.gtf > ${name}.stringtie.alignment.gff3
+perl /Tools/TransDecoder-3.0.1/util/cufflinks_gtf_to_alignment_gff3.pl ${name}.stringtie.gtf > ${name}.stringtie.alignment.gff3
 
-TransDecoder.LongOrfs -t ${name}.stringtie.exon.fasta
-TransDecoder.Predict --cpu $n_cores -t ${name}.stringtie.exon.fasta
+/Tools/TransDecoder-3.0.1/util/TransDecoder.LongOrfs -t ${name}.stringtie.exon.fasta
+/Tools/TransDecoder-3.0.1/util/TransDecoder.Predict --cpu $n_cores -t ${name}.stringtie.exon.fasta
 
-cdna_alignment_orf_to_genome_orf.pl ${name}.stringtie.exon.fasta.transdecoder.gff3 ${name}.stringtie.alignment.gff3 ${name}.stringtie.exon.fasta > ${name}.stringtie.transdecoder.gff3
+/Tools/TransDecoder-3.0.1/util/cdna_alignment_orf_to_genome_orf.pl ${name}.stringtie.exon.fasta.transdecoder.gff3 ${name}.stringtie.alignment.gff3 ${name}.stringtie.exon.fasta > ${name}.stringtie.transdecoder.gff3
 ```
 
 Filter models with broken ORFs (no met at start, premature stop codons).
@@ -89,19 +89,19 @@ grep -wFf <(awk '$3=="mRNA"' ${name}.trinity.og.on.genome.gff3 | sed 's:;:\t:g;s
 
 gffread -g $genome -w ${name}.trinity.og.on.genome.cov_iden_g95.fasta -o - -T ${name}.trinity.og.on.genome.cov_iden_g95.gff3 > ${name}.trinity.og.on.genome.cov_iden_g95.gtf
 
-cufflinks_gtf_to_alignment_gff3.pl ${name}.trinity.og.on.genome.cov_iden_g95.gtf > ${name}.trinity.og.on.genome.cov_iden_g95.alignment.gff3
+/Tools/TransDecoder-3.0.1/util/cufflinks_gtf_to_alignment_gff3.pl ${name}.trinity.og.on.genome.cov_iden_g95.gtf > ${name}.trinity.og.on.genome.cov_iden_g95.alignment.gff3
 ```
 
 Identify ORFs in alignment mRNA sequences and port coordinates on the genome.
 
 ``` bash
-TransDecoder.LongOrfs -t ${name}.trinity.og.on.genome.cov_iden_g95.fasta
+/Tools/TransDecoder-3.0.1/util/TransDecoder.LongOrfs -t ${name}.trinity.og.on.genome.cov_iden_g95.fasta
 
-TransDecoder.Predict --cpu $n_cores -t ${name}.trinity.og.on.genome.cov_iden_g95.fasta
+/Tools/TransDecoder-3.0.1/util/TransDecoder.Predict --cpu $n_cores -t ${name}.trinity.og.on.genome.cov_iden_g95.fasta
 
 cat ${name}.trinity.og.on.genome.cov_iden_g95.fasta.transdecoder.gff3 | awk '$7!="-"' > ${name}.trinity.og.on.genome.cov_iden_g95.fasta.transdecoder.no_minus.gff3
 
-TransDecoder-3.0.1/util/cdna_alignment_orf_to_genome_orf.pl ${name}.trinity.og.on.genome.cov_iden_g95.fasta.transdecoder.no_minus.gff3 ${name}.trinity.og.on.genome.cov_iden_g95.alignment.gff3 ${name}.trinity.og.on.genome.cov_iden_g95.fasta > ${name}.trinity.og.transdecoder.gff3
+/Tools/TransDecoder-3.0.1/util/cdna_alignment_orf_to_genome_orf.pl ${name}.trinity.og.on.genome.cov_iden_g95.fasta.transdecoder.no_minus.gff3 ${name}.trinity.og.on.genome.cov_iden_g95.alignment.gff3 ${name}.trinity.og.on.genome.cov_iden_g95.fasta > ${name}.trinity.og.transdecoder.gff3
 ```
 
 Filter models with broken ORFs (no met at start, premature stop codons).
@@ -132,7 +132,7 @@ Map assembled mRNAs.
 ``` bash
 cat *.trinity.dn.fasta > ${name}.trinity.dn.fasta
 
-/DATA7/Resources/Tools/gmap-2015-09-29/bin/gmap -K 20000 -B 4 -x 30 -f 2 -t $n_cores -O -D gmap_index/ -d $genome ${name}.trinity.dn.fasta > ${name}.trinity.dn.on.genome.gff3 2>> ${name}.trinity.dn.on.genome.err
+gmap -K 20000 -B 4 -x 30 -f 2 -t $n_cores -O -D gmap_index/ -d $genome ${name}.trinity.dn.fasta > ${name}.trinity.dn.on.genome.gff3 2>> ${name}.trinity.dn.on.genome.err
 ```
 
 Filter alignments in very stringent way (identity \>95% && coverage \>95%) and discard CDS tentative reconstruction.
@@ -146,18 +146,18 @@ Extract alignment mRNA sequence and convert annotation to alignment GFF3.
 ``` bash
 gffread -g $genome -w ${name}.trinity.dn.on.genome.cov_iden_g95.fasta -o - -T ${name}.trinity.dn.on.genome.cov_iden_g95.gff3 > ${name}.trinity.dn.on.genome.cov_iden_g95.gtf
 
-cufflinks_gtf_to_alignment_gff3.pl ${name}.trinity.dn.on.genome.cov_iden_g95.gtf > ${name}.trinity.dn.on.genome.cov_iden_g95.alignment.gff3
+/Tools/TransDecoder-3.0.1/util/cufflinks_gtf_to_alignment_gff3.pl ${name}.trinity.dn.on.genome.cov_iden_g95.gtf > ${name}.trinity.dn.on.genome.cov_iden_g95.alignment.gff3
 ```
 
 Identify CDSs in alignment mRNA sequences and port the coordinates from transcript to genome.
 
 ``` bash
-TransDecoder.LongOrfs -t ${name}.trinity.dn.on.genome.cov_iden_g95.fasta
+/Tools/TransDecoder-3.0.1/util/TransDecoder.LongOrfs -t ${name}.trinity.dn.on.genome.cov_iden_g95.fasta
 
-TransDecoder.Predict --cpu $n_cores -t ${name}.trinity.dn.on.genome.cov_iden_g95.fasta
+/Tools/TransDecoder-3.0.1/util/TransDecoder.Predict --cpu $n_cores -t ${name}.trinity.dn.on.genome.cov_iden_g95.fasta
 cat ${name}.trinity.dn.on.genome.cov_iden_g95.fasta.transdecoder.gff3 | awk '$7!="-"' > ${name}.trinity.dn.on.genome.cov_iden_g95.fasta.transdecoder.no_minus.gff3
 
-TransDecoder-3.0.1/util/cdna_alignment_orf_to_genome_orf.pl ${name}.trinity.dn.on.genome.cov_iden_g95.fasta.transdecoder.no_minus.gff3 ${name}.trinity.dn.on.genome.cov_iden_g95.alignment.gff3 ${name}.trinity.dn.on.genome.cov_iden_g95.fasta > ${name}.trinity.dn.transdecoder.gff3
+/Tools/TransDecoder-3.0.1/util/TransDecoder-3.0.1/util/cdna_alignment_orf_to_genome_orf.pl ${name}.trinity.dn.on.genome.cov_iden_g95.fasta.transdecoder.no_minus.gff3 ${name}.trinity.dn.on.genome.cov_iden_g95.alignment.gff3 ${name}.trinity.dn.on.genome.cov_iden_g95.fasta > ${name}.trinity.dn.transdecoder.gff3
 ```
 
 Filter out results of transcripts with broken ORFs (no met at start, premature stop codons).

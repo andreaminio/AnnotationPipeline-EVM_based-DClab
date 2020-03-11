@@ -27,7 +27,7 @@ awk '$3=="intron"' ../../2_1_2-Training_set/${name}.gene_models.gff3 > ${name}.g
 Run the prediction.
 
 ``` bash
-gmes_petap.pl --sequence $genome --ET ${name}.gene_models.introns.gff3 --training --cores $n_cores --v --max_intergenic 1000000 --max_intron 20000 > genemark.train.log 2>genemark.train.err 
+/Tools/GeneMark_suite/bin/gm_et_linux_64/gmes_petap/gmes_petap.pl --sequence $genome --ET ${name}.gene_models.introns.gff3 --training --cores $n_cores --v --max_intergenic 1000000 --max_intron 20000 > genemark.train.log 2>genemark.train.err 
 ```
 
 Rename the prediction results.

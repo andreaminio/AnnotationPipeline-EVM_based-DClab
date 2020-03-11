@@ -29,7 +29,7 @@ cat <(cat ../../../2_1_2-Training_set/$name.gene_models.gff3 ; echo "#FASTA" ; c
 Convert GFF3 to ZFF format and correct input files.
 
 ``` bash
-maker2zff -n $name.gene_models.SNAP_tset.gff3 2> /dev/null
+/Tools/maker-2.31.9/bin/maker2zff -n $name.gene_models.SNAP_tset.gff3 2> /dev/null
 
 rm -rf genome.dna
 
@@ -39,19 +39,19 @@ for id in $(grep '^>' genome.ann | sed 's:>::'); do echo $id; getFastaFromIds.py
 Run prediction steps.
 
 ``` bash
-fathom genome.ann genome.dna -gene-stats -errors-ok > stats
+/Tools/snap/fathom genome.ann genome.dna -gene-stats -errors-ok > stats
 
-fathom genome.ann genome.dna -categorize 1000
+/Tools/snap/fathom genome.ann genome.dna -categorize 1000
 
-fathom genome.ann genome.dna -errors-ok -export 1000 -plus
+/Tools/snap/fathom genome.ann genome.dna -errors-ok -export 1000 -plus
 
 mkdir -p ../params && cd ../params
 
-/DATA7/Resources/Tools/snap/forge ../prep/export.ann ../prep/export.dna 
+/Tools/snap/forge ../prep/export.ann ../prep/export.dna 
 
 mkdir -p ../model && cd ../model
 
-/DATA7/Resources/Tools/snap/hmm-assembler.pl $name ../params > $name.SNAP.hmm
+/Tools/snap/hmm-assembler.pl $name ../params > $name.SNAP.hmm
 ```
 
 Copy and rename the model file.

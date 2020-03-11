@@ -54,84 +54,85 @@ validate_alignments_in_db.dbi:--MAX_INTRON_LENGTH=25000
 #### 5.2.0.3.4 - Setup the environment
 
 ``` bash
-export PASAHOME=/DATA7/Resources/Tools/PASApipeline-v2.3.3/
-export PATH=/DATA7/Resources/Tools/PASApipeline-v2.3.3/bin:/DATA7/Resources/Tools/PASApipeline-v2.3.3/:$PATH
+export PASAHOME=/Tools/PASApipeline-v2.3.3/
+export PATH=/Tools/PASApipeline-v2.3.3/bin:/Tools/PASApipeline-v2.3.3/:$PATH
 ```
 
 ## 5.2.1 - Run PASA
 
 ``` bash
-create_sqlite_cdnaassembly_db.dbi -c pasa_config.txt -S 'cdna_alignment_sqliteschema' -r
+/Tools/PASApipeline-v2.3.3/scripts/create_sqlite_cdnaassembly_db.dbi -c pasa_config.txt -S 'cdna_alignment_sqliteschema' -r
+
 samtools faidx ${genome}
 
 samtools faidx all_transcripts.fasta
 
-upload_transcript_data.dbi -M 'trainig_PASA.sqlite' -t all_transcripts.fasta  -f NULL 
+/Tools/PASApipeline-v2.3.3/scripts/upload_transcript_data.dbi -M 'trainig_PASA.sqlite' -t all_transcripts.fasta  -f NULL 
 run_spliced_aligners.pl --aligners gmap,blat --genome ${genome} --transcripts all_transcripts.fasta -I 25000 -N 1 --CPU $n_cores -N 5
 
-/import_spliced_alignments.dbi -M 'trainig_PASA.sqlite'  -A gmap -g gmap.spliced_alignments.gff3
+/Tools/PASApipeline-v2.3.3/scripts/import_spliced_alignments.dbi -M 'trainig_PASA.sqlite'  -A gmap -g gmap.spliced_alignments.gff3
 
-import_spliced_alignments.dbi -M 'trainig_PASA.sqlite'  -A blat -g blat.spliced_alignments.gff3
+/Tools/PASApipeline-v2.3.3/scripts/import_spliced_alignments.dbi -M 'trainig_PASA.sqlite'  -A blat -g blat.spliced_alignments.gff3
 
-TransDecoder.LongOrfs -t all_transcripts.fasta  
+/Tools/PASApipeline-v2.3.3/pasa-plugins/TransDecoder.LongOrfs -t all_transcripts.fasta  
 
-TransDecoder.Predict -t all_transcripts.fasta 
+/Tools/PASApipeline-v2.3.3/pasa-plugins/TransDecoder.Predict -t all_transcripts.fasta 
 
-extract_FL_transdecoder_entries.pl all_transcripts.fasta.transdecoder.gff3 > all_transcripts.fasta.transdecoder.gff3.fl_accs
+/Tools/PASApipeline-v2.3.3/scripts/extract_FL_transdecoder_entries.pl all_transcripts.fasta.transdecoder.gff3 > all_transcripts.fasta.transdecoder.gff3.fl_accs
 
-update_fli_status.dbi -M 'trainig_PASA.sqlite' -f all_transcripts.fasta.transdecoder.gff3.fl_accs
+/Tools/PASApipeline-v2.3.3/scripts/update_fli_status.dbi -M 'trainig_PASA.sqlite' -f all_transcripts.fasta.transdecoder.gff3.fl_accs
 
-validate_alignments_in_db.dbi -M 'trainig_PASA.sqlite' -g ${genome} -t all_transcripts.fasta --MAX_INTRON_LENGTH 25000 --CPU $n_cores --MAX_INTRON_LENGTH 25000 > alignment.validations.output
+/Tools/PASApipeline-v2.3.3/scripts/validate_alignments_in_db.dbi -M 'trainig_PASA.sqlite' -g ${genome} -t all_transcripts.fasta --MAX_INTRON_LENGTH 25000 --CPU $n_cores --MAX_INTRON_LENGTH 25000 > alignment.validations.output
 
-update_alignment_status.dbi -M 'trainig_PASA.sqlite' < alignment.validations.output  > pasa_run.log.dir/alignment.validation_loading.output
+/Tools/PASApipeline-v2.3.3/scripts/update_alignment_status.dbi -M 'trainig_PASA.sqlite' < alignment.validations.output  > pasa_run.log.dir/alignment.validation_loading.output
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -v -A -P gmap > trainig_PASA.sqlite.valid_gmap_alignments.gff3
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -v -A -P gmap > trainig_PASA.sqlite.valid_gmap_alignments.gff3
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -v -A -P gmap -B  > trainig_PASA.sqlite.valid_gmap_alignments.bed
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -v -A -P gmap -B  > trainig_PASA.sqlite.valid_gmap_alignments.bed
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -v -A -P gmap -T  > trainig_PASA.sqlite.valid_gmap_alignments.gtf
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -v -A -P gmap -T  > trainig_PASA.sqlite.valid_gmap_alignments.gtf
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -f -A -P gmap > trainig_PASA.sqlite.failed_gmap_alignments.gff3
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -f -A -P gmap > trainig_PASA.sqlite.failed_gmap_alignments.gff3
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -f -A -P gmap -B  > trainig_PASA.sqlite.failed_gmap_alignments.bed
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -f -A -P gmap -B  > trainig_PASA.sqlite.failed_gmap_alignments.bed
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -f -A -P gmap -T  > trainig_PASA.sqlite.failed_gmap_alignments.gtf
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -f -A -P gmap -T  > trainig_PASA.sqlite.failed_gmap_alignments.gtf
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -v -A -P blat > trainig_PASA.sqlite.valid_blat_alignments.gff3
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -v -A -P blat > trainig_PASA.sqlite.valid_blat_alignments.gff3
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -v -A -P blat -B  > trainig_PASA.sqlite.valid_blat_alignments.bed
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -v -A -P blat -B  > trainig_PASA.sqlite.valid_blat_alignments.bed
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -v -A -P blat -T  > trainig_PASA.sqlite.valid_blat_alignments.gtf
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -v -A -P blat -T  > trainig_PASA.sqlite.valid_blat_alignments.gtf
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -f -A -P blat > trainig_PASA.sqlite.failed_blat_alignments.gff3
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -f -A -P blat > trainig_PASA.sqlite.failed_blat_alignments.gff3
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -f -A -P blat -B  > trainig_PASA.sqlite.failed_blat_alignments.bed
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -f -A -P blat -B  > trainig_PASA.sqlite.failed_blat_alignments.bed
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -f -A -P blat -T  > trainig_PASA.sqlite.failed_blat_alignments.gtf
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -f -A -P blat -T  > trainig_PASA.sqlite.failed_blat_alignments.gtf
 
-assign_clusters_by_stringent_alignment_overlap.dbi -M trainig_PASA.sqlite -L 30 > pasa_run.log.dir/cluster_reassignment_by_stringent_overlap.out
+/Tools/PASApipeline-v2.3.3/scripts/assign_clusters_by_stringent_alignment_overlap.dbi -M trainig_PASA.sqlite -L 30 > pasa_run.log.dir/cluster_reassignment_by_stringent_overlap.out
 
-assemble_clusters.dbi -G ${genome}  -M 'trainig_PASA.sqlite'  -T $n_cores  > trainig_PASA.sqlite.pasa_alignment_assembly_building.ascii_illustrations.out
+/Tools/PASApipeline-v2.3.3/scripts/assemble_clusters.dbi -G ${genome}  -M 'trainig_PASA.sqlite'  -T $n_cores  > trainig_PASA.sqlite.pasa_alignment_assembly_building.ascii_illustrations.out
 
-assembly_db_loader.dbi -M 'trainig_PASA.sqlite' > pasa_run.log.dir/alignment_assembly_loading.out
+/Tools/PASApipeline-v2.3.3/scripts/assembly_db_loader.dbi -M 'trainig_PASA.sqlite' > pasa_run.log.dir/alignment_assembly_loading.out
 
-subcluster_builder.dbi -G ${genome} -M 'trainig_PASA.sqlite'  > pasa_run.log.dir/alignment_assembly_subclustering.out
+/Tools/PASApipeline-v2.3.3/scripts/subcluster_builder.dbi -G ${genome} -M 'trainig_PASA.sqlite'  > pasa_run.log.dir/alignment_assembly_subclustering.out
 
-populate_mysql_assembly_alignment_field.dbi -M 'trainig_PASA.sqlite' -G ${genome}
+/Tools/PASApipeline-v2.3.3/scripts/populate_mysql_assembly_alignment_field.dbi -M 'trainig_PASA.sqlite' -G ${genome}
 
-populate_mysql_assembly_sequence_field.dbi -M 'trainig_PASA.sqlite' -G ${genome}
+/Tools/PASApipeline-v2.3.3/scripts/populate_mysql_assembly_sequence_field.dbi -M 'trainig_PASA.sqlite' -G ${genome}
 
-subcluster_loader.dbi -M 'trainig_PASA.sqlite'  < pasa_run.log.dir/alignment_assembly_subclustering.out 
+/Tools/PASApipeline-v2.3.3/scripts/subcluster_loader.dbi -M 'trainig_PASA.sqlite'  < pasa_run.log.dir/alignment_assembly_subclustering.out 
 
-alignment_assembly_to_gene_models.dbi -M 'trainig_PASA.sqlite' -G ${genome}
+/Tools/PASApipeline-v2.3.3/scripts/alignment_assembly_to_gene_models.dbi -M 'trainig_PASA.sqlite' -G ${genome}
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -a  > trainig_PASA.sqlite.pasa_assemblies.gff3
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -a  > trainig_PASA.sqlite.pasa_assemblies.gff3
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -a -B  > trainig_PASA.sqlite.pasa_assemblies.bed
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -a -B  > trainig_PASA.sqlite.pasa_assemblies.bed
 
-PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -a -T  > trainig_PASA.sqlite.pasa_assemblies.gtf
+/Tools/PASApipeline-v2.3.3/scripts/PASA_transcripts_and_assemblies_to_GFF3.dbi -M 'trainig_PASA.sqlite' -a -T  > trainig_PASA.sqlite.pasa_assemblies.gtf
 
-describe_alignment_assemblies_cgi_convert.dbi -M 'trainig_PASA.sqlite'  > trainig_PASA.sqlite.pasa_assemblies_described.txt
+/Tools/PASApipeline-v2.3.3/scripts/describe_alignment_assemblies_cgi_convert.dbi -M 'trainig_PASA.sqlite'  > trainig_PASA.sqlite.pasa_assemblies_described.txt
 ```
 
 Edit \"vendor\" field on GFF3 files and copy them in the folder where EVM must be run.
@@ -156,7 +157,7 @@ makeblastdb -in $genome -dbtype nucl -parse_seqids
 Run Megablast mapping.
 
 ``` bash
-magicblast -query all_transcripts.fasta -db ${genome} -outfmt sam -num_threads 10 -no_unaligned > transcript_alignment.magicblast.mapped.sam
+/Tools/ncbi-magicblast-1.4.0/bin/magicblast -query all_transcripts.fasta -db ${genome} -outfmt sam -num_threads 10 -no_unaligned > transcript_alignment.magicblast.mapped.sam
 ```
 
 Filter alignments keeping only the ones with coverage \>70% and identity \>70%.

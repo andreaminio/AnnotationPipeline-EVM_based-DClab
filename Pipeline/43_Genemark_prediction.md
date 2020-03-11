@@ -34,7 +34,7 @@ model=../../../2_1-Training/2_1_2-Predictor_training/2_1_2_2-Genemark/${name}.ge
 Run Genemark in parallel on multiple genomic sequences.
 
 ``` bash
-parallel --gnu -j 10 "gmhmme3 -m $model -o gff3/{/.}.gff3 -b logs/{/.}.stats -f gff3 {}" :::: fasta_list  
+parallel --gnu -j 10 "/Tools/GeneMark_suite/bin/genemark_hmm_euk_linux_64/ehmm/gmhmme3 -m $model -o gff3/{/.}.gff3 -b logs/{/.}.stats -f gff3 {}" :::: fasta_list  
 ```
 
 Extract the results.

@@ -35,7 +35,7 @@ mkdir fasta && cd fasta/ && cat ../proteins.fasta | awk 'BEGIN {n_seq=0;} /^>/ {
 Run in parallel the exonerate alignment by input sequence:
 
 ``` bash
-parallel -j $n_jobs "exonerate --model protein2genome --percent 50 fasta/{} $genome --showtargetgff TRUE  > alignments/{}.exonerate.out 2> logs/{}.exonerate.err" :::: file_list
+parallel -j $n_jobs "/Tools/exonerate-2.2.0-x86_64/bin/exonerate --model protein2genome --percent 50 fasta/{} $genome --showtargetgff TRUE  > alignments/{}.exonerate.out 2> logs/{}.exonerate.err" :::: file_list
 ```
 
 5.1.2 - Convert alignments to GFF3
@@ -46,7 +46,7 @@ Extract the output and copy the resulting GFF3 to EVM folder.
 ``` bash
 find alignments -name "*.exonerate.out" | sort > file_list.out
 
-parallel -j $n_jobs "Exonerate_to_evm_gff3.pl {} | sed 's:\(.*ID\=\)\(.*\=\)\(.*\):\1\3.\2\3:' > {.}.match.gff3" :::: file_list.out
+parallel -j $n_jobs "/Tools/EVidenceModeler-1.1.1/EvmUtils/misc/Exonerate_to_evm_gff3.pl {} | sed 's:\(.*ID\=\)\(.*\=\)\(.*\):\1\3.\2\3:' > {.}.match.gff3" :::: file_list.out
 
 find alignments -name "*.match.gff3" -exec cat {} \; | sed '/^$/d' > ../2_2_6-EVM/protein_alignments.gff3
 ```

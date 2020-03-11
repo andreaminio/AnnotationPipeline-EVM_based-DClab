@@ -27,7 +27,7 @@ mkdir blast
 Generate commands.
 
 ``` bash
-awk 'BEGIN {getline; id=$1 ;gsub(">","",id); print id ;filename="fasta/"id".fasta"; print $0 >filename } { if ($1~"^>") {id=$1 ; sub(/>/,"",id); filename="fasta/"id".fasta"; print id};  print $0 > filename }' gene_models.protein.fasta | sed 's:\(.*\):\~/Assembly_tools/Tools/ncbi-blast-2.2.28+/bin/blastp -num_threads 6 -db /DATA/db/RefSeq_protein_Plants/RefSeq_Plants.protein.faa -show_gis -outfmt 5 -query fasta/\1.fasta > blast/\1.xml:' > blast_commands.sh
+awk 'BEGIN {getline; id=$1 ;gsub(">","",id); print id ;filename="fasta/"id".fasta"; print $0 >filename } { if ($1~"^>") {id=$1 ; sub(/>/,"",id); filename="fasta/"id".fasta"; print id};  print $0 > filename }' gene_models.protein.fasta | sed 's:\(.*\):\blastp -num_threads 6 -db /DATA/db/RefSeq_protein_Plants/RefSeq_Plants.protein.faa -show_gis -outfmt 5 -query fasta/\1.fasta > blast/\1.xml:' > blast_commands.sh
 ```
 
 Run blast commands in parallel.

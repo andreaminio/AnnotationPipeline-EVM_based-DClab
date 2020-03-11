@@ -45,7 +45,7 @@ blastn -db ${name}.RNAseq_assembly.CDS.fasta -query ${name}.RNAseq_assembly.CDS.
 Obtain identity and coverage.
 
 ``` bash
-blastXmlToPsl ${name}.RNAseq_assembly.CDS.self.xml ${name}.RNAseq_assembly.CDS.self.psl
+/Tools/blat/blastXmlToPsl ${name}.RNAseq_assembly.CDS.self.xml ${name}.RNAseq_assembly.CDS.self.psl
 
 awk 'BEGIN {print "T_name\tT_nem\t|\tQ_name\tQ_len\t|\tMatches\tMismatches\tT_gaps\tQ_gaps\t|\tT_iden\tQ_iden\t|\tT_cov\tQ_cov"}; {print $14"\t"$15"\t|\t"$10"\t"$11"\t|\t"$1"\t"$2"\t"$8"\t"$6"\t|\t"($1-$2-$8)/$1"\t"($1-$2-$6)/$1"\t|\t"$1/$15"\t"$1/$11}' ${name}.RNAseq_assembly.CDS.self.psl > ${name}.RNAseq_assembly.CDS.blast.cov_iden.txt
 ```
@@ -61,14 +61,14 @@ awk 'BEGIN {print "T_name\tT_nem\t|\tQ_name\tQ_len\t|\tMatches\tMismatches\tT_ga
 Make a combined annotation.
 
 ``` bash
-gffcompare -p ${name}.RNAseq_assembly -o ${name}.RNAseq_assembly -C -X -D -T *.transdecoder.clean.CDS.gff3
+/Tools/gffcompare/gffcompare -p ${name}.RNAseq_assembly -o ${name}.RNAseq_assembly -C -X -D -T *.transdecoder.clean.CDS.gff3
 sed -i 's:XLOC_:'${name}'.RNAseq_assembly.mergedlocus:' ${name}.RNAseq_assembly.combined.gtf
 ```
 
 Find intron/exon structure overlaps.
 
 ``` bash
-gffcompare -p ${name}.RNAseq_assembly.check -o ${name}.RNAseq_assembly.check -r ${name}.RNAseq_assembly.combined.gtf -C -Q -R -X -D  *.transdecoder.clean.CDS.gff3
+/Tools/gffcompare/gffcompare -p ${name}.RNAseq_assembly.check -o ${name}.RNAseq_assembly.check -r ${name}.RNAseq_assembly.combined.gtf -C -Q -R -X -D  *.transdecoder.clean.CDS.gff3
 
 for file in ${name}.RNAseq_assembly.check.${name}.*tmap; do awk '$3=="="' $file | awk '{print $1"|"$2"\t"$4}' > ${file}.perfect_match ; done
 

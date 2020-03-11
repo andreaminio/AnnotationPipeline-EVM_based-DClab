@@ -17,7 +17,7 @@ The process starts from the results of PASA pipeline that has been run also for 
 Identify CDS regions in the PASA assembled gene models.
 
 ``` bash
-pasa_asmbls_to_training_set.dbi --pasa_transcripts_fasta trainig_PASA.sqlite.assemblies.fasta --pasa_transcripts_gff3 trainig_PASA.sqlite.pasa_assemblies.gff3
+/Tools/PASApipeline-v2.3.3/scripts/pasa_asmbls_to_training_set.dbi --pasa_transcripts_fasta trainig_PASA.sqlite.assemblies.fasta --pasa_transcripts_gff3 trainig_PASA.sqlite.pasa_assemblies.gff3
 ```
 
 Edit the vendor column of GFF3 file and copy it into EVM folder.

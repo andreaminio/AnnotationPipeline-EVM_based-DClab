@@ -30,11 +30,11 @@ model=../../../2_1-Training/2_1_2-Predictor_training/2_1_2_3-SNAP/${name}.SNAP.h
 Run SNAP.
 
 ``` bash
-/DATA/users/aminio/Assembly_tools/Tools/snap/snap -tx prediction.snap.CDS.fasta $model $genome > prediction.snap.txt 2> err 
+/Tools/snap/snap -tx prediction.snap.CDS.fasta $model $genome > prediction.snap.txt 2> err 
 ```
 
 Extract the results.
 
 ``` bash
-zff2gff3.pl prediction.snap.txt | gffread -E --force-exons -O -F -o - | sed '1,1d;s:-snap\.:-snap.t:' | sed '/mRNA/ s:\(.*\)mRNA\(.*ID=\)\(.*\)\.t\([0-9]*\)$:\1gene\2\3.g\4\n\1mRNA\2\3.t\4;Parent=\3.g\4:;/CDS/ s/\(.*Parent=\)\(.*\)/\1\2;ID=\2.cds./;/exon/ s/\(.*Parent=\)\(.*\)/\1\2;ID=\2.exon./' | awk '{if ($3=="exon" || $3=="CDS" ) {print $0NR} else {print $0}   } ' > prediction.snap.gff3
+/Tools/snap/zff2gff3.pl prediction.snap.txt | gffread -E --force-exons -O -F -o - | sed '1,1d;s:-snap\.:-snap.t:' | sed '/mRNA/ s:\(.*\)mRNA\(.*ID=\)\(.*\)\.t\([0-9]*\)$:\1gene\2\3.g\4\n\1mRNA\2\3.t\4;Parent=\3.g\4:;/CDS/ s/\(.*Parent=\)\(.*\)/\1\2;ID=\2.cds./;/exon/ s/\(.*Parent=\)\(.*\)/\1\2;ID=\2.exon./' | awk '{if ($3=="exon" || $3=="CDS" ) {print $0NR} else {print $0}   } ' > prediction.snap.gff3
 ```
