@@ -11,7 +11,7 @@ The following tools are required. Some options and compatibilities might depend 
 - [augustus v.3.0.3](http://bioinf.uni-greifswald.de/augustus/)
 - [bedtools v.2.26.0](https://bedtools.readthedocs.io/en/latest/) 
 - [BLAST v.2.6.0+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
-- [Blast2GO](https://www.blast2go.com/)
+- [Blast2GO v.4.1.9](https://www.blast2go.com/)
 - [BLAT v.36x2](https://genome.ucsc.edu/FAQ/FAQblat.html)
 - [busco v.3.0.2](https://busco.ezlab.org/)
 - [EVidenceModeler v.1.1.1](https://evidencemodeler.github.io/)
@@ -22,6 +22,7 @@ The following tools are required. Some options and compatibilities might depend 
 - [gffread](http://ccb.jhu.edu/software/stringtie/gff.shtml)
 - [gmap v.2015-09-29](http://research-pub.gene.com/gmap/)
 - [hisat2 v.2.0.5](https://ccb.jhu.edu/software/hisat2/manual.shtml)
+- [interproscan v.5.28-67.0](https://www.ebi.ac.uk/interpro/search/sequence/)
 - [IsoSeq v.3](https://github.com/PacificBiosciences/IsoSeq)
 - [LSC v.2.0](http://augroup.org/LSC/LSC)
 - [magicblast v.1.4.0](https://ncbi.github.io/magicblast/)
@@ -110,6 +111,8 @@ Most of the tools are assumed to be installed in the `PATH`. If not, the absolut
 **Haas BJ, Papanicolaou A, Yassour M, Grabherr M, Blood PD, Bowden J, Couger MB, Eccles D, Li B, Lieber M, Macmanes MD, Ott M, Orvis J, Pochet N, Strozzi F, Weeks N, Westerman R, William T, Dewey CN, Henschel R, Leduc RD, Friedman N, Regev A** (2013) De novo transcript sequence reconstruction from RNA-seq using the Trinity platform for reference generation and analysis. Nature Protocols **8**: 1494–512
 
 **Haas BJ, Salzberg SL, Zhu W, Pertea M, Allen JE, Orvis J, White O, Buell CR, Wortman JR** (2008) Automated eukaryotic gene structure annotation using EVidenceModeler and the Program to Assemble Spliced Alignments. Genome Biol **9**: R7
+
+**Jones P, Binns D, Chang H-Y, Fraser M, Li W, McAnulla C, McWilliam H, Maslen J, Mitchell A, Nuka G, Pesseat S, Quinn AF, Sangrador-Vegas A, Scheremetjew M, Yong S-Y, Lopez R, Hunter S** (2014) InterProScan 5: genome-scale protein function classification. Bioinformatics **30**: 1236–1240
 
 **Kim D, Langmead B, Salzberg SL** (2015) HISAT: a fast spliced aligner with low memory requirements. Nat Methods **12**: 357–60
 
