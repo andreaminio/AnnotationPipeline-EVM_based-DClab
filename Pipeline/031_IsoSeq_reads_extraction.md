@@ -35,7 +35,7 @@ isoseq3 refine --require-polya --num-threads $n_cores --log-level DEBUG --log-fi
 Run Clustering.
 
 ```bash
-isoseq3 cluster --num-threads n_cores --log-level DEBUG --log-file isoseq3.cluster.log -v --use-qvs ${sample}.flnc.bam --singletons  ${sample}.polished.bam > isoseq3.cluster.err
+isoseq3 cluster --num-threads $n_cores --log-level DEBUG --log-file isoseq3.cluster.log -v --use-qvs ${sample}.flnc.bam --singletons  ${sample}.polished.bam > isoseq3.cluster.err
 ```
 
 0.3.1.3 - Quality Control
@@ -50,13 +50,13 @@ for file in *.bam ; do samtools fasta ${file} > ${file}.fasta; done
 Run Stats.
 
 ```bash
-for file in *fasta ; do reads_statistics.sh ${file} > ${file}.stats; done
+for file in *fasta ; do bash reads_statistics.sh ${file} > ${file}.stats; done
 ```
 
 Extract Read lengths. 
 
 ```bash
-for file in *.fasta ; do getLengthFromFasta.py ${file} > ${file}.len; done
+for file in *.fasta ; do python getLengthFromFasta.py ${file} > ${file}.len; done
 ```
 
 FASTQC.
@@ -82,11 +82,12 @@ fastqc --extract -t $n_cores *.bam
 
   ```bash
   /Tools/TransDecoder-3.0.1/util/TransDecoder.LongOrfs -t ${sample}.polished.hq.fasta -m 30 -S
+  
   /Tools/TransDecoder-3.0.1/util/TransDecoder.Predict -t ${sample}.polished.hq.fasta --cpu $n_cores --single_best_orf
-  ```
-
-  Export FASTA.
-
+```
+  
+Export FASTA.
+  
   ```bash
   cat ${sample}.polished.hq.fasta.transdecoder.pep | sed 's:>Gene\.[0-9]*\:\::>IsoSeq_HQ.:;s:\:.*::;s:/:_:g' > ../../../2_0_1-Proteins/${sample}.IsoSeq_HQ.prot.fasta 
   ```

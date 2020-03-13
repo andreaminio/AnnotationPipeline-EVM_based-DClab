@@ -125,6 +125,7 @@ Run Trinity on each sample separately.
 
 ``` bash
 $TRINITY --max_memory 95G --CPU $n_cores --single ${sample}.*fastq.gz --seqType fq --min_contig_length 200 --normalize_max_read_cov 30 --jaccard_clip --output Trinity_DeNovo_${sample} 2>&1 > Trinity_DeNovo_${sample}.trinity_log.txt
+
 cat Trinity_DeNovo_${sample}/Trinity.fasta | sed 's: .*::;s:>:>'${sample}'_:' > ${sample}.trinity.dn.fasta
 ```
 
@@ -156,6 +157,7 @@ Identify CDSs in alignment mRNA sequences and port the coordinates from transcri
 /Tools/TransDecoder-3.0.1/util/TransDecoder.LongOrfs -t ${name}.trinity.dn.on.genome.cov_iden_g95.fasta
 
 /Tools/TransDecoder-3.0.1/util/TransDecoder.Predict --cpu $n_cores -t ${name}.trinity.dn.on.genome.cov_iden_g95.fasta
+
 cat ${name}.trinity.dn.on.genome.cov_iden_g95.fasta.transdecoder.gff3 | awk '$7!="-"' > ${name}.trinity.dn.on.genome.cov_iden_g95.fasta.transdecoder.no_minus.gff3
 
 /Tools/TransDecoder-3.0.1/util/TransDecoder-3.0.1/util/cdna_alignment_orf_to_genome_orf.pl ${name}.trinity.dn.on.genome.cov_iden_g95.fasta.transdecoder.no_minus.gff3 ${name}.trinity.dn.on.genome.cov_iden_g95.alignment.gff3 ${name}.trinity.dn.on.genome.cov_iden_g95.fasta > ${name}.trinity.dn.transdecoder.gff3

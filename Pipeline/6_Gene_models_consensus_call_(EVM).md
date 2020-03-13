@@ -247,6 +247,7 @@ Copy files.
 
 ``` bash
 cp EVM.filtered.polished.clean*fasta EVM.filtered.polished.clean*gff3 ../2_2_8-Filtering/
+
 rename 's:EVM.filtered.polished.clean:gene_models:' ../2_2_8-Filtering/EVM.filtered.polished.clean*
 ```
 
