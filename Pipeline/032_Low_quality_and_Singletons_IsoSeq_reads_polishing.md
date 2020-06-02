@@ -4,9 +4,9 @@
 ## 0.3.2.0 - Setup
 
 -  **0.3.2.0.1 - Define variables**
-  - `sample_rnaseq` sample name of the RNA-Seq sample.
-  - `sample_isoseq` sample name of the Iso-Seq sample.
-  - `n_cores` number of cores.
+-   `sample_rnaseq` sample name of the RNA-Seq sample.
+  -   `sample_isoseq` sample name of the Iso-Seq sample.
+  -   `n_cores` number of cores.
 
 -  **0.3.2.0.2 - Set WD**
 ```bash
