@@ -3,12 +3,12 @@
 
 ## 0.3.2.0 - Setup
 
--  **0.3.2.0.1 - Define variables**
--   `sample_rnaseq` sample name of the RNA-Seq sample.
-  -   `sample_isoseq` sample name of the Iso-Seq sample.
-  -   `n_cores` number of cores.
+* **0.3.2.0.1 - Define variables**
+  * `sample_rnaseq` sample name of the RNA-Seq sample.
+  * `sample_isoseq` sample name of the Iso-Seq sample.
+  * `n_cores` number of cores.
 
--  **0.3.2.0.2 - Set WD**
+* **0.3.2.0.2 - Set WD**
 ```bash
 cd 2_0-External_evidences/2_0_2-mRNAs/2_0_2_3-IsoSeq/2_0_2_3_2-IsoSeq_polishing/
 ```
