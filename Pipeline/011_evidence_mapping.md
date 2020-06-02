@@ -1,6 +1,16 @@
 0.1.1 - mRNA/cDNA/ESTs/CDSs mapping
 ===================================
 
+0.1.1.0 - Define variables
+----------
+
+n_cores number of cores.
+
+genome genome fasta sequence.
+
+mRNAs_fasta mRNA evidences fasta file.
+
+
 0.1.1.1 - Mapping
 -------------------
 
