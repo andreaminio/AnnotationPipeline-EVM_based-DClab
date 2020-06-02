@@ -80,7 +80,7 @@ fastqc --extract -t $n_cores *.bam
 
   - Run transdecoder.
 
-  ```bash
+```bash
   /Tools/TransDecoder-3.0.1/util/TransDecoder.LongOrfs -t ${sample}.polished.hq.fasta -m 30 -S
   
   /Tools/TransDecoder-3.0.1/util/TransDecoder.Predict -t ${sample}.polished.hq.fasta --cpu $n_cores --single_best_orf
