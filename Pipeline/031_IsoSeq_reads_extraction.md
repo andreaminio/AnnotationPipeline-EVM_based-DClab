@@ -79,15 +79,12 @@ fastqc --extract -t $n_cores *.bam
 - **Proteins**
 
   - Run transdecoder.
-
 ```bash
   /Tools/TransDecoder-3.0.1/util/TransDecoder.LongOrfs -t ${sample}.polished.hq.fasta -m 30 -S
   
   /Tools/TransDecoder-3.0.1/util/TransDecoder.Predict -t ${sample}.polished.hq.fasta --cpu $n_cores --single_best_orf
 ```
-  
- - Export FASTA.
-  
-  ```bash
+  - Export FASTA.
+```bash
   cat ${sample}.polished.hq.fasta.transdecoder.pep | sed 's:>Gene\.[0-9]*\:\::>IsoSeq_HQ.:;s:\:.*::;s:/:_:g' > ../../../2_0_1-Proteins/${sample}.IsoSeq_HQ.prot.fasta 
-  ```
+```
