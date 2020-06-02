@@ -68,7 +68,7 @@ fastqc --extract -t $n_cores *.bam
 0.3.1.4 - Export HQ reads
 -------------------------
 
-- **Transcripts**
+## Transcripts**
 
   Export FASTA.
 
@@ -76,8 +76,7 @@ fastqc --extract -t $n_cores *.bam
   cat ${sample}.polished.hq.fasta | sed 's:>:>IsoSeq_HQ.:;s:/:_:g;s: .*::' > ../../${sample}.IsoSeq_HQ.fasta
   ```
 
-- **Proteins**
-
+## Proteins**
   - Run transdecoder.
 ```bash
   /Tools/TransDecoder-3.0.1/util/TransDecoder.LongOrfs -t ${sample}.polished.hq.fasta -m 30 -S
