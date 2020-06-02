@@ -1,9 +1,10 @@
 0.2.1 - Reads and evidence mapping
 ==================================
 
-## 0.2.1.0 - Setup
+0.2.1.0 - Setup
+-----
 
-### 0.2.1.0.1 - Define variables
+## 0.2.1.0.1 - Define variables
 
 `out_dir` directory for filtered reads.
 
@@ -21,8 +22,6 @@
 
 `genome` genome fasta sequence.
 
-`mRNAs_fasta` mRNA evidences fasta file.
-
 ### 0.2.1.0.2 - Set WD
 
 ```bash
@@ -32,7 +31,7 @@ cd 2-Annotation/2_0-External_evidences/2_0_2-mRNAs/2_0_2_2-RNAseq/2_0_2_2_1-RNAs
 0.2.1.1 - RNAseq reads mapping
 ------------------------------
 
-### 0.2.1.1.1 - Filter reads
+## 0.2.1.1.1 - Filter reads
 
 -   Paired-end reads
 
@@ -50,7 +49,7 @@ bash /Scripts/doFilter.SR.sh $out_dir
 
 Will run on all FASTQ files of reads in the folder separately and will put the the corresponding output files in `$out_dir`.
 
-### 0.2.1.1.2 - Map
+## 0.2.1.1.2 - Map
 
 -   Paired-end reads
 
