@@ -184,3 +184,4 @@ cp -v *.transdecoder.clean.mRNA.fasta ../../
 cp -v *.transdecoder.clean.prot.fasta ../../../2_0_1-Proteins/
 ```
 
+#### 
