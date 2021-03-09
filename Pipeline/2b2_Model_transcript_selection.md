@@ -64,7 +64,7 @@ less -S tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_b
 
 python /Scripts/filter_most_representative.py tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_blast.iden_cov.ge95.txt > tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_blast.iden_cov.ge95.representatives 2> tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_blast.iden_cov.ge95.clusters
 
-grep -wFf tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_blast.iden_cov.ge95.representatives tmp.IsoSeq_training_PASA.sqlite.gene_models.gff3 | awk '$3=="CDS" || $3=="mRNA"' | sed '/\tmRNA\t/ s:\(.*\)mRNA\(.*ID=\)\(.*Parent=\)\(.*\):\1gene\2\4\n\1mRNA\2\3\4:' | sed '/\tCDS\t/ s:\(.*\)CDS\(.*\)Parent=\(.*\);ID=\(.*\)cds\(.*\):\1exon\2Parent=\3;ID=\4exon\5\n\1CDS\2Parent=\3;ID=\4cds\5:' > tmp.${name}.no_redundant.gene_models.gff3
+grep -wFf tmp.protein.to.RefSeq_Plants.iden_cov.g90.no_repeat.protein.fasta.self_blast.iden_cov.ge95.representatives tmp.IsoSeq_training_PASA.sqlite.gene_models.gff3 | awk '$3=="CDS" || $3=="mRNA"' | sed '/\tmRNA\t/ s:\(.*\)mRNA\(.*ID=\)\(.*Parent=\)\(.*\):\1gene\2\4\n\1mRNA\2\3\4:' | sed '/\tCDS\t/ s:\(.*\)CDS\(.*\)ID=\(.*\)cds\(.*\);Parent=\(.*\):\1exon\2ID=\3exon\4;Parent=\5\n\1CDS\2ID=\3cds\4;Parent=\5:' > tmp.${name}.no_redundant.gene_models.gff3
 ```
 
 ``` bash
