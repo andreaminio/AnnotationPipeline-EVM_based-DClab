@@ -1,10 +1,1038 @@
 #!/usr/bin/env python
 
-from GFF_lib import *
-
+import sys
+import string
+import random
+from operator import itemgetter
+import pandas as pd
+import numpy as np
+from Bio import SeqIO
+from Bio.Seq import Seq
+from optparse import OptionParser
+import matplotlib
+matplotlib.use('pdf')
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.font_manager as font_manager
+import gc
+import os
+import gzip
 
 gc.garbage.append(sys.stdout)
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+
+def write_gff3( genes , out_name , reference ) :
+
+	filename_gff3 = open( out_name ,"w")
+	print >> filename_gff3, "##gff-version 3"
+	chr_printed=""
+	for g_key, g_value in sorted(genes.items(), key=lambda gene: gene[1:2]) :
+		actual_chr=genes[g_key][1]
+		if chr_printed != actual_chr :
+			print >> filename_gff3, "##sequence-region "+ str(actual_chr) + " 1 "+str(len(reference[actual_chr]))
+			chr_printed = actual_chr
+		print >> filename_gff3, "### " + g_key
+		print >> filename_gff3, genes[g_key][0]
+		# Iterate on mRNAs
+		for m_key in sorted(genes[g_key][3], key=lambda mRNA: mRNA[1]) :
+			print >> filename_gff3, genes[g_key][3][m_key][0]
+			for feat_key in sorted(genes[g_key][3][m_key][2].keys()):
+				for el in sorted( genes[g_key][3][m_key][2][feat_key] , key=lambda feat : feat[1]) :
+					print >> filename_gff3, el[0]
+
+
+def read_gff_from_file( gff3_file ) :
+	mRNA_feat_order = {"exon": 1, "intron":1, "five_prime_UTR":2 , "CDS":3, "three_prime_UTR":4}
+	genes = {}
+	mRNA = {}
+
+	## Read original gff
+	for line in open(gff3_file):
+		#print >> sys.stdout, "#\t" + line.rstrip()
+		if line[0] == "#" or line.rstrip() == "" :
+			continue  # print >> sys.stderr, line.rstrip()
+		else:
+			attributes_dict = {}
+			seqname, source, feature, start, end, score, strand, frame, attribute = line.rstrip().split("\t")
+			for chunk in attribute.rstrip(";").split(";"):
+				att = chunk.split("=")
+				try : attributes_dict[att[0]] = att[1]
+				except : print >> sys.stderr , "error in attributes at line: " + line
+
+			if feature == "gene":
+				gene_name = attributes_dict["ID"]
+				if gene_name in genes :
+					genes[gene_name][0] = line.rstrip()
+					genes[gene_name][1] = seqname
+					genes[gene_name][2] = int(start)
+				else:
+					genes[gene_name] = [line.rstrip(), seqname, int(start), {}]
+
+
+			elif feature == "mRNA":
+				gene_name = attributes_dict["Parent"]
+				if not attributes_dict["ID"] in mRNA :
+					mRNA[attributes_dict["ID"]] = gene_name
+				else :
+					print >> sys.stderr, "Duplicated mRNA ID: " + attributes_dict["ID"]
+					sys.exit(1)
+
+				if gene_name in genes :
+					genes[gene_name][3][attributes_dict["ID"]] = [line.rstrip(), int(start), {}]
+				else :
+					genes[gene_name] = ["", "", "", {}]
+					genes[gene_name][3][attributes_dict["ID"]] = [line.rstrip(), int(start), {}]
+
+			elif feature == "intergenic" :
+				continue
+
+			elif feature == "intron" :
+				continue
+
+			else :
+				mRNA_ID = attributes_dict["Parent"]
+				if len(mRNA_ID.split(","))>1 :
+					for single_id in mRNA_ID.split(",") :
+						if single_id in mRNA :
+							gene_name = mRNA[single_id]
+							attributes_dict["Parent"] = single_id
+							attribute = ""
+							for key in reversed(attributes_dict.keys()) : attribute = attribute + key + "=" + attributes_dict[key] + ";"
+							if mRNA_feat_order[feature] not in genes[gene_name][3][single_id][2] :
+								genes[gene_name][3][single_id][2][mRNA_feat_order[feature]]=[]
+							new_line = "\t".join([seqname, source, feature, start, end, score, strand, frame, attribute])
+							genes[gene_name][3][single_id][2][mRNA_feat_order[feature]].append([new_line, int(start),int(end)])
+				else:
+					if mRNA_ID in mRNA :
+						gene_name = mRNA[mRNA_ID]
+						if mRNA_feat_order[feature] not in genes[gene_name][3][mRNA_ID][2] :
+							genes[gene_name][3][mRNA_ID][2][mRNA_feat_order[feature]]=[]
+						genes[gene_name][3][mRNA_ID][2][mRNA_feat_order[feature]].append([line.rstrip(), int(start),int(end)])
+
+	return genes , mRNA
+
+
+def write_fasta_from_db( fasta_db , out_name , compress = False ) :
+
+	if compress :
+		out_fasta_file = gzip.open(out_name, "w")
+	else :
+		out_fasta_file = open(out_name, "w")
+
+	for seq_id in sorted(fasta_db.keys()) :
+		print >> sys.stderr , "Printing " + seq_id
+		print >> out_fasta_file , ">" + str(seq_id)
+		seq_len = len(fasta_db[seq_id])
+		for i in range( 0 , seq_len , 60 ):
+			print >> out_fasta_file , fasta_db[seq_id][i : min( i + 60 , seq_len) ]
+		#print >> out_fasta_file , "\n".join( textwrap.wrap( fasta_db[seq_id] , 60 ) )
+
+	out_fasta_file.close()
+
+	return out_name
+
+
+def Nvalue(n,len_list):
+	curr_sum = 0
+	count = 0
+	tot_len = sum(len_list)
+	for length in len_list:
+		curr_sum += length
+		count += 1
+		if curr_sum >= tot_len*n/100:
+			return([length,count])
+
+
+def len_stats(list,n_loci,n_mRNAs):
+
+	if list == [] : stats_array = [0,0,0,0,0,0,0,0,0,0]
+	else :
+		stats_array = []
+
+		stats_array.append(len(list)) # Counts
+		stats_array.append(sum(list)) # Global length
+		if n_loci >0 :
+			stats_array.append(float(len(list))/float(n_loci)) # Average per Locus
+		else :
+			stats_array.append(0)
+		if n_mRNAs>0 :
+			stats_array.append(float(len(list))/float(n_mRNAs)) # Avereage per mRNA
+		else :
+			stats_array.append(0)
+		stats_array.append(np.max(list)) # Max Length
+		stats_array.append(np.mean(list)) # Average Length
+		stats_array.append(np.std(list)) # Length St. Dev.
+		stats_array += np.percentile(list,[25,50,75]).tolist()# Length 25% quantile , Length 50% quantile / Median,  Length 75% quantile
+
+	return(stats_array)
+
+
+def count_stats(list):
+
+	if list == [] : stats_array = [0,0,0,0,0,0,0,0,0,0]
+	else :
+		stats_array = []
+
+		stats_array.append(0) # Counts
+		stats_array.append(0) # Global length
+		stats_array.append(0) # Average per Locus
+		stats_array.append(0) # Avereage per mRNA
+		stats_array.append(np.max(list)) # Max Length
+		stats_array.append(np.mean(list)) # Average Length
+		stats_array.append(np.std(list)) # Length St. Dev.
+		stats_array += np.percentile(list,[25,50,75]).tolist()# Length 25% quantile , Length 50% quantile / Median,  Length 75% quantile
+
+	return(stats_array)
+
+
+def print_len( prefix , lengths_list , subfeat_count_list , reference , print_mems=True) :
+	prefix = str(prefix)
+	gene_region_length , mRNA_region_length , exon_region_length , UTRp5_region_length , UTRp3_region_length , CDS_region_length , intron_region_length , intergenic_region_length , mRNA_length , UTRp5_length , UTRp3_length , CDS_length , protein_length , gene_region_length_singleExon , mRNA_region_length_singleExon , exon_region_length_singleExon , UTRp5_region_length_singleExon , UTRp3_region_length_singleExon , CDS_region_length_singleExon , mRNA_length_singleExon , UTRp5_length_singleExon , UTRp3_length_singleExon , protein_length_singleExon , CDS_length_singleExon , gene_region_length_multiExon , mRNA_region_length_multiExon , exon_region_length_multiExon , UTRp5_region_length_multiExon , UTRp3_region_length_multiExon , CDS_region_length_multiExon , mRNA_length_multiExon , UTRp5_length_multiExon , UTRp3_length_multiExon , protein_length_multiExon , CDS_length_multiExon = lengths_list
+	mRNA_per_gene , exons_per_mRNA , UTRp5_exons_per_mRNA , UTRp3_exons_per_mRNA , CDS_exons_per_mRNA , mRNA_per_gene_singleExon , mRNA_per_gene_multiExon , exons_per_mRNA_multiExon , CDS_exons_per_mRNA_multiExon , UTRp5_exons_per_mRNA_multiExon , UTRp3_exons_per_mRNA_multiExon , UTRp3_exons_per_mRNA_multiExon = subfeat_count_list
+	genome_seq_lenths = sorted([ len(reference[x].seq) for x in reference ] ,reverse=True)
+
+	filename_gene_region_length   = open(prefix+".locus.lengths.txt",'w')
+	filename_mRNA_region_length   = open(prefix+".mRNA_region.lengths.txt",'w')
+	filename_exon_region_length   = open(prefix+".exon_region.lengths.txt",'w')
+	filename_UTRp5_region_length  = open(prefix+".5pUTR_exon.lengths.txt",'w')
+	filename_UTRp3_region_length  = open(prefix+".3pUTR_exon.lengths.txt",'w')
+	filename_CDS_region_length    = open(prefix+".CDS_exon.lengths.txt",'w')
+	filename_intron_region_length = open(prefix+".intron.lengths.txt",'w')
+	filename_intergenic_region_length    = open(prefix+".intergenic.lengths.txt",'w')
+
+	filename_mRNA_length          = open(prefix+".mRNA_sequence.lengths.txt",'w')
+	filename_UTRp5_length         = open(prefix+".5pUTR_sequence.lengths.txt",'w')
+	filename_UTRp3_length         = open(prefix+".3pUTR_sequence.lengths.txt",'w')
+	filename_protein_length       = open(prefix+".protein_sequence.lengths.txt",'w')
+	filename_CDS_length           = open(prefix+".CDS_sequence.lengths.txt",'w')
+
+
+	print >> filename_gene_region_length, "\n".join(str(a) for a in gene_region_length)
+	print >> filename_mRNA_region_length, "\n".join(str(a) for a in mRNA_region_length)
+	print >> filename_exon_region_length, "\n".join(str(a) for a in exon_region_length)
+	print >> filename_UTRp5_region_length, "\n".join(str(a) for a in UTRp5_region_length)
+	print >> filename_UTRp3_region_length, "\n".join(str(a) for a in UTRp3_region_length)
+	print >> filename_CDS_region_length, "\n".join(str(a) for a in CDS_region_length)
+	print >> filename_intron_region_length, "\n".join(str(a) for a in intron_region_length)
+	print >> filename_intergenic_region_length, "\n".join(str(a) for a in intergenic_region_length)
+
+	print >> filename_mRNA_length, "\n".join(str(a) for a in mRNA_length)
+	print >> filename_UTRp5_length, "\n".join(str(a) for a in UTRp5_length)
+	print >> filename_UTRp3_length, "\n".join(str(a) for a in UTRp3_length)
+	print >> filename_protein_length, "\n".join(str(a) for a in CDS_length)
+	print >> filename_CDS_length, "\n".join(str(a) for a in protein_length)
+
+	filename_gene_region_length.close()
+	filename_mRNA_region_length.close()
+	filename_exon_region_length.close()
+	filename_UTRp5_region_length.close()
+	filename_UTRp3_region_length.close()
+	filename_CDS_region_length.close()
+	filename_intron_region_length.close()
+	filename_intergenic_region_length.close()
+	filename_mRNA_length.close()
+	filename_UTRp5_length.close()
+	filename_UTRp3_length.close()
+	filename_protein_length.close()
+	filename_CDS_length.close()
+
+	if print_mems :
+
+		filename_gene_region_length_single   = open(prefix+".locus.monoexonic.lengths.txt",'w')
+		filename_mRNA_region_length_single   = open(prefix+".mRNA_region.monoexonic.lengths.txt",'w')
+		filename_exon_region_length_single   = open(prefix+".exon_region.monoexonic.lengths.txt",'w')
+		filename_UTRp5_region_length_single  = open(prefix+".5pUTR_exon.monoexonic.lengths.txt",'w')
+		filename_UTRp3_region_length_single  = open(prefix+".3pUTR_exon.monoexonic.lengths.txt",'w')
+		filename_CDS_region_length_single    = open(prefix+".CDS_exon.monoexonic.lengths.txt",'w')
+
+		filename_mRNA_length_single          = open(prefix+".mRNA_sequence.monoexonic.lengths.txt",'w')
+		filename_UTRp5_length_single         = open(prefix+".5pUTR_sequence.monoexonic.lengths.txt",'w')
+		filename_UTRp3_length_single         = open(prefix+".3pUTR_sequence.monoexonic.lengths.txt",'w')
+		filename_protein_length_single       = open(prefix+".protein_sequence.monoexonic.lengths.txt",'w')
+		filename_CDS_length_single           = open(prefix+".CDS_sequence.monoexonic.lengths.txt",'w')
+
+		print >> filename_gene_region_length_single , "\n".join(str(a) for a in gene_region_length_singleExon)
+		print >> filename_mRNA_region_length_single , "\n".join(str(a) for a in mRNA_region_length_singleExon)
+		print >> filename_exon_region_length_single , "\n".join(str(a) for a in exon_region_length_singleExon)
+		print >> filename_UTRp5_region_length_single , "\n".join(str(a) for a in UTRp5_region_length_singleExon)
+		print >> filename_UTRp3_region_length_single , "\n".join(str(a) for a in UTRp3_region_length_singleExon)
+		print >> filename_CDS_region_length_single , "\n".join(str(a) for a in CDS_region_length_singleExon)
+
+		print >> filename_mRNA_length_single , "\n".join(str(a) for a in mRNA_length_singleExon)
+		print >> filename_UTRp5_length_single , "\n".join(str(a) for a in UTRp5_length_singleExon)
+		print >> filename_UTRp3_length_single , "\n".join(str(a) for a in UTRp3_length_singleExon)
+		print >> filename_protein_length_single , "\n".join(str(a) for a in protein_length_singleExon)
+		print >> filename_CDS_length_single , "\n".join(str(a) for a in CDS_length_singleExon)
+
+		filename_gene_region_length_single.close()
+		filename_mRNA_region_length_single.close()
+		filename_exon_region_length_single.close()
+		filename_UTRp5_region_length_single.close()
+		filename_UTRp3_region_length_single.close()
+		filename_CDS_region_length_single.close()
+
+		filename_mRNA_length_single.close()
+		filename_UTRp5_length_single.close()
+		filename_UTRp3_length_single.close()
+		filename_protein_length_single.close()
+		filename_CDS_length_single.close()
+
+
+
+		filename_gene_region_length_multi   = open(prefix+".locus.multiexonic.lengths.txt",'w')
+		filename_mRNA_region_length_multi   = open(prefix+".mRNA_region.multiexonic.lengths.txt",'w')
+		filename_exon_region_length_multi   = open(prefix+".exon_region.multiexonic.lengths.txt",'w')
+		filename_UTRp5_region_length_multi  = open(prefix+".5pUTR_exon.multiexonic.lengths.txt",'w')
+		filename_UTRp3_region_length_multi  = open(prefix+".3pUTR_exon.multiexonic.lengths.txt",'w')
+		filename_CDS_region_length_multi    = open(prefix+".CDS_exon.multiexonic.lengths.txt",'w')
+
+		filename_mRNA_length_multi          = open(prefix+".mRNA_sequence.multiexonic.lengths.txt",'w')
+		filename_UTRp5_length_multi         = open(prefix+".5pUTR_sequence.multiexonic.lengths.txt",'w')
+		filename_UTRp3_length_multi         = open(prefix+".3pUTR_sequence.multiexonic.lengths.txt",'w')
+		filename_protein_length_multi       = open(prefix+".protein_sequence.multiexonic.lengths.txt",'w')
+		filename_CDS_length_multi           = open(prefix+".CDS_sequence.multiexonic.lengths.txt",'w')
+
+		print >> filename_gene_region_length_multi , "\n".join(str(a) for a in gene_region_length_multiExon)
+		print >> filename_mRNA_region_length_multi , "\n".join(str(a) for a in mRNA_region_length_multiExon)
+		print >> filename_exon_region_length_multi , "\n".join(str(a) for a in exon_region_length_multiExon)
+		print >> filename_UTRp5_region_length_multi , "\n".join(str(a) for a in UTRp5_region_length_multiExon)
+		print >> filename_UTRp3_region_length_multi , "\n".join(str(a) for a in UTRp3_region_length_multiExon)
+		print >> filename_CDS_region_length_multi , "\n".join(str(a) for a in CDS_region_length_multiExon)
+
+		print >> filename_mRNA_length_multi , "\n".join(str(a) for a in mRNA_length_multiExon)
+		print >> filename_UTRp5_length_multi , "\n".join(str(a) for a in UTRp5_length_multiExon)
+		print >> filename_UTRp3_length_multi , "\n".join(str(a) for a in UTRp3_length_multiExon)
+		print >> filename_protein_length_multi , "\n".join(str(a) for a in protein_length_multiExon)
+		print >> filename_CDS_length_multi , "\n".join(str(a) for a in CDS_length_multiExon)
+
+		filename_gene_region_length_multi.close()
+		filename_mRNA_region_length_multi.close()
+		filename_exon_region_length_multi.close()
+		filename_UTRp5_region_length_multi.close()
+		filename_UTRp3_region_length_multi.close()
+		filename_CDS_region_length_multi.close()
+
+		filename_mRNA_length_multi.close()
+		filename_UTRp5_length_multi.close()
+		filename_UTRp3_length_multi.close()
+		filename_protein_length_multi.close()
+		filename_CDS_length_multi.close()
+
+
+def print_counts (prefix , lengths_list , subfeat_count_list , reference , print_mems=True):
+	prefix = str(prefix)
+	gene_region_length , mRNA_region_length , exon_region_length , UTRp5_region_length , UTRp3_region_length , CDS_region_length , intron_region_length , intergenic_region_length , mRNA_length , UTRp5_length , UTRp3_length , CDS_length , protein_length , gene_region_length_singleExon , mRNA_region_length_singleExon , exon_region_length_singleExon , UTRp5_region_length_singleExon , UTRp3_region_length_singleExon , CDS_region_length_singleExon , mRNA_length_singleExon , UTRp5_length_singleExon , UTRp3_length_singleExon , protein_length_singleExon , CDS_length_singleExon , gene_region_length_multiExon , mRNA_region_length_multiExon , exon_region_length_multiExon , UTRp5_region_length_multiExon , UTRp3_region_length_multiExon , CDS_region_length_multiExon , mRNA_length_multiExon , UTRp5_length_multiExon , UTRp3_length_multiExon , protein_length_multiExon , CDS_length_multiExon = lengths_list
+	mRNA_per_gene , exons_per_mRNA , UTRp5_exons_per_mRNA , UTRp3_exons_per_mRNA , CDS_exons_per_mRNA , mRNA_per_gene_singleExon , mRNA_per_gene_multiExon , exons_per_mRNA_multiExon , CDS_exons_per_mRNA_multiExon , UTRp5_exons_per_mRNA_multiExon , UTRp3_exons_per_mRNA_multiExon , UTRp3_exons_per_mRNA_multiExon = subfeat_count_list
+	genome_seq_lenths = sorted([ len(reference[x].seq) for x in reference ] ,reverse=True)
+
+	filename_mRNA_per_gene        = open(prefix+".mRNA_per_locus.counts.txt",'w')
+	filename_exons_per_mRNA       = open(prefix+".exon_per_mRNA.counts.txt",'w')
+	filename_UTRp5_exons_per_mRNA = open(prefix+".5pUTR_per_mRNA.counts.txt",'w')
+	filename_UTRp3_exons_per_mRNA = open(prefix+".3pUTR_per_mRNA.counts.txt",'w')
+	filename_CDS_exons_per_mRNA   = open(prefix+".CDS_per_mRNA.counts.txt",'w')
+
+	print >> filename_mRNA_per_gene, "\n".join(str(a) for a in mRNA_per_gene)
+	print >> filename_exons_per_mRNA, "\n".join(str(a) for a in exons_per_mRNA)
+	print >> filename_UTRp5_exons_per_mRNA, "\n".join(str(a) for a in UTRp5_exons_per_mRNA)
+	print >> filename_UTRp3_exons_per_mRNA, "\n".join(str(a) for a in UTRp3_exons_per_mRNA)
+	print >> filename_CDS_exons_per_mRNA, "\n".join(str(a) for a in CDS_exons_per_mRNA)
+
+	filename_mRNA_per_gene.close()
+	filename_exons_per_mRNA.close()
+	filename_UTRp5_exons_per_mRNA.close()
+	filename_UTRp3_exons_per_mRNA.close()
+	filename_CDS_exons_per_mRNA.close()
+
+	if print_mems :
+		filename_mRNA_per_gene_single = open(prefix+".mRNA_per_locus.monoexonic.counts.txt",'w')
+		filename_mRNA_per_gene_multi  = open(prefix+".mRNA_per_locus.multiexonic.counts.txt",'w')
+		filename_exons_per_mRNA_multi = open(prefix+".exon_per_mRNA.multiexonic.counts.txt",'w')
+		filename_UTRp5_exons_per_mRNA_multi = open(prefix+".5pUTR_per_mRNA.multiexonic.counts.txt",'w')
+		filename_UTRp3_exons_per_mRNA_multi = open(prefix+".3pUTR_per_mRNA.multiexonic.counts.txt",'w')
+		filename_CDS_exons_per_mRNA_multi= open(prefix+".CDS_per_mRNA.multiexonic.counts.txt",'w')
+
+		print >> filename_mRNA_per_gene_single, "\n".join(str(a) for a in mRNA_per_gene_singleExon)
+		print >> filename_mRNA_per_gene_multi, "\n".join(str(a) for a in mRNA_per_gene_multiExon)
+		print >> filename_exons_per_mRNA_multi, "\n".join(str(a) for a in exons_per_mRNA_multiExon)
+		print >> filename_UTRp5_exons_per_mRNA_multi, "\n".join(str(a) for a in UTRp5_exons_per_mRNA_multiExon)
+		print >> filename_UTRp3_exons_per_mRNA_multi, "\n".join(str(a) for a in UTRp3_exons_per_mRNA_multiExon)
+		print >> filename_CDS_exons_per_mRNA_multi, "\n".join(str(a) for a in CDS_exons_per_mRNA_multiExon)
+
+		filename_mRNA_per_gene_single.close()
+		filename_mRNA_per_gene_multi.close()
+		filename_exons_per_mRNA_multi.close()
+		filename_UTRp5_exons_per_mRNA_multi.close()
+		filename_UTRp3_exons_per_mRNA_multi.close()
+		filename_CDS_exons_per_mRNA_multi.close()
+
+
+def print_stats( prefix , genome , reference , gff , lengths_list , subfeat_count_list , print_mems=True ):
+
+	prefix = str(prefix)
+	gene_region_length , mRNA_region_length , exon_region_length , UTRp5_region_length , UTRp3_region_length , CDS_region_length , intron_region_length , intergenic_region_length , mRNA_length , UTRp5_length , UTRp3_length , CDS_length , protein_length , gene_region_length_singleExon , mRNA_region_length_singleExon , exon_region_length_singleExon , UTRp5_region_length_singleExon , UTRp3_region_length_singleExon , CDS_region_length_singleExon , mRNA_length_singleExon , UTRp5_length_singleExon , UTRp3_length_singleExon , protein_length_singleExon , CDS_length_singleExon , gene_region_length_multiExon , mRNA_region_length_multiExon , exon_region_length_multiExon , UTRp5_region_length_multiExon , UTRp3_region_length_multiExon , CDS_region_length_multiExon , mRNA_length_multiExon , UTRp5_length_multiExon , UTRp3_length_multiExon , protein_length_multiExon , CDS_length_multiExon = lengths_list
+	mRNA_per_gene , exons_per_mRNA , UTRp5_exons_per_mRNA , UTRp3_exons_per_mRNA , CDS_exons_per_mRNA , mRNA_per_gene_singleExon , mRNA_per_gene_multiExon , exons_per_mRNA_multiExon , CDS_exons_per_mRNA_multiExon , UTRp5_exons_per_mRNA_multiExon , UTRp3_exons_per_mRNA_multiExon , UTRp3_exons_per_mRNA_multiExon = subfeat_count_list
+	genome_seq_lenths = sorted([ len(reference[x].seq) for x in reference ] ,reverse=True)
+
+
+	### Stats comupted for each feature
+	# Count
+	# Global Length
+	# Average per Locus
+	# Avereage per mRNA
+	# Max Length
+	# Average Length
+	# Length St. Dev.
+	# Length 25% quantile
+	# Length 50% quantile / Median
+	# Length 75% quantile
+
+	colnames = [
+				"Count",
+				"Cumulative Length",
+				"Average per locus",
+				"Average per mRNA",
+				"Max",
+				"Average",
+				"St. Dev.",
+				"25th quantile",
+				"50th quantile / Median",
+				"75th quantile"
+				]
+
+	formatting_db = {
+				'Count': '{:,.0f}',
+				'Cumulative Length': '{:,.0f}',
+				'Average per locus': '{:,.2f}',
+				'Average per mRNA': '{:,.2f}',
+				'Max': '{:,.0f}',
+				'Average': '{:,.2f}',
+				'St. Dev.': '{:,.2f}',
+				'25th quantile': '{:,.0f}',
+				'50th quantile / Median': '{:,.0f}',
+				'75th quantile': '{:,.0f}',
+			}
+
+	formatter_obj = {k: v.format for k, v in formatting_db.items()}
+
+	filename_stats = open(prefix+".stats.txt", 'w')
+
+	print >> filename_stats, "#########################################################"
+	print >> filename_stats, "#### Annotation statistics ##############################"
+	print >> filename_stats, "Annotation file\t" + gff
+	print >> filename_stats, "Genome file\t" + genome
+
+	genome_seq_lenths = sorted([ len(reference[x].seq) for x in reference ] ,reverse=True)
+
+	#print >> sys.stderr, genome_seq_lenths
+
+	print >> filename_stats , "\n\n"
+	print >> filename_stats , "#########################################################"
+	print >> filename_stats , "#### Genome Statistics ##################################"
+	print >> filename_stats , "Genome length:" + "\t" + str('%.0f' % sum(genome_seq_lenths))
+	print >> filename_stats , "Number of sequences:" + "\t" + str('%.0f' % len(genome_seq_lenths))
+	print >> filename_stats , "Average sequence length:" + "\t" + str('%.2f' % np.mean(genome_seq_lenths))
+	print >> filename_stats , "Median_seqence_length" + "\t" + str('%.0f' % np.median(genome_seq_lenths))
+	print >> filename_stats , "Minimum sequence length:" + "\t" + str('%.0f' % np.min(genome_seq_lenths))
+	print >> filename_stats , "Maximum sequence length:" + "\t" + str('%.0f' % np.max(genome_seq_lenths))
+
+	N , L = Nvalue(25 ,genome_seq_lenths)
+	print >> filename_stats , "N25 length:\t" + str(N) + "\tIndex:\t" + str(L)
+	N , L = Nvalue(50 ,genome_seq_lenths)
+	print >> filename_stats , "N50 length:\t" + str(N) + "\tIndex:\t" + str(L)
+	N , L = Nvalue(75 ,genome_seq_lenths)
+	print >> filename_stats , "N75 length:\t" + str(N) + "\tIndex:\t" + str(L)
+	N , L = Nvalue(90 ,genome_seq_lenths)
+	print >> filename_stats , "N90 length:\t" + str(N) + "\tIndex:\t" + str(L)
+
+	print >> filename_stats , "Sequences > 100b - Count:\t"  +  str('%.0f' % len([x for x in genome_seq_lenths if x > 100 ])) + "\tCumulative length:\t" + str('%.0f' % sum([x for x in genome_seq_lenths if x > 100 ]))
+	print >> filename_stats , "Sequences > 500b - Count:\t"  +  str('%.0f' % len([x for x in genome_seq_lenths if x > 500 ])) + "\tCumulative length:\t" + str('%.0f' % sum([x for x in genome_seq_lenths if x > 500 ]))
+	print >> filename_stats , "Sequences > 1Kb - Count:\t"  +  str('%.0f' % len([x for x in genome_seq_lenths if x > 1000 ])) + "\tCumulative length:\t" + str('%.0f' % sum([x for x in genome_seq_lenths if x > 1000 ]))
+	print >> filename_stats , "Sequences > 5Kb - Count:\t"  +  str('%.0f' % len([x for x in genome_seq_lenths if x > 5000 ])) + "\tCumulative length:\t" + str('%.0f' % sum([x for x in genome_seq_lenths if x > 5000 ]))
+	print >> filename_stats , "Sequences > 10Kb - Count:\t"  +  str('%.0f' % len([x for x in genome_seq_lenths if x > 10000 ])) + "\tCumulative length:\t" + str('%.0f' % sum([x for x in genome_seq_lenths if x > 10000 ]))
+	print >> filename_stats , "Sequences > 50Kb - Count:\t"  +  str('%.0f' % len([x for x in genome_seq_lenths if x > 50000 ])) + "\tCumulative length:\t" + str('%.0f' % sum([x for x in genome_seq_lenths if x > 50000 ]))
+	print >> filename_stats , "Sequences > 100Kb - Count:\t"  +  str('%.0f' % len([x for x in genome_seq_lenths if x > 100000 ])) + "\tCumulative length:\t" + str('%.0f' % sum([x for x in genome_seq_lenths if x > 100000 ]))
+	print >> filename_stats , "Sequences > 500Kb - Count:\t"  +  str('%.0f' % len([x for x in genome_seq_lenths if x > 500000 ])) + "\tCumulative length:\t" + str('%.0f' % sum([x for x in genome_seq_lenths if x > 500000 ]))
+	print >> filename_stats , "Sequences > 1Mb - Count:\t"  +  str('%.0f' % len([x for x in genome_seq_lenths if x > 1000000 ])) + "\tCumulative length:\t" + str('%.0f' % sum([x for x in genome_seq_lenths if x > 1000000 ]))
+	print >> filename_stats , "Sequences > 5Mb - Count:\t"  +  str('%.0f' % len([x for x in genome_seq_lenths if x > 5000000 ])) + "\tCumulative length:\t" + str('%.0f' % sum([x for x in genome_seq_lenths if x > 5000000 ]))
+
+	print >> filename_stats, "\n\n"
+	print >> filename_stats, "#########################################################"
+	print >> filename_stats, "#### Overall ############################################"
+
+	num_loci = len(gene_region_length)
+	num_mRNAs = len(mRNA_length)
+
+	overall = np.array(len_stats(gene_region_length,num_loci,0))
+	overall = np.vstack([overall,len_stats(mRNA_region_length,num_loci,num_mRNAs)])
+	overall = np.vstack([overall,count_stats(mRNA_per_gene)])
+	overall = np.vstack([overall,len_stats(intergenic_region_length,0,0)])
+	overall = np.vstack([overall,len_stats(exon_region_length,num_loci,num_mRNAs)])
+	overall = np.vstack([overall,count_stats(exons_per_mRNA)])
+	overall = np.vstack([overall,len_stats(intron_region_length,num_loci,num_mRNAs)])
+	overall = np.vstack([overall,len_stats(UTRp5_region_length,num_loci,num_mRNAs)])
+	overall = np.vstack([overall,count_stats(UTRp5_exons_per_mRNA)])
+	overall = np.vstack([overall,len_stats(UTRp3_region_length,num_loci,num_mRNAs)])
+	overall = np.vstack([overall,count_stats(UTRp3_exons_per_mRNA)])
+	overall = np.vstack([overall,len_stats(CDS_region_length,num_loci,num_mRNAs)])
+	overall = np.vstack([overall,count_stats(CDS_exons_per_mRNA)])
+	overall = np.vstack([overall,len_stats(mRNA_length,num_loci,num_mRNAs)])
+	overall = np.vstack([overall,len_stats(CDS_length,num_loci,num_mRNAs)])
+	overall = np.vstack([overall,len_stats(UTRp5_length,num_loci,num_mRNAs)])
+	overall = np.vstack([overall,len_stats(UTRp3_length,num_loci,num_mRNAs)])
+	overall = np.vstack([overall,len_stats(protein_length,num_loci,num_mRNAs)])
+
+	rownames_overall = [
+				"Loci",
+				"mRNAs",
+				"mRNAs count/locus",
+				"Intergenic regions lengths",
+				"Exons lengths",
+				"Exons count/mRNA",
+				"Introns lengths",
+				"5' UTRs exons lengths",
+				"5' UTRs exons count/mRNA",
+				"3' UTRs exons lengths",
+				"3' UTRs exons count/mRNA",
+				"CDSs exons lengths",
+				"CDSs exons count/mRNA",
+				"mRNAs sequences lengths",
+				"CDSs sequences lengths",
+				"5' UTRs sequences lengths",
+				"3' UTRs sequences lengths",
+				"Protein sequences lengths"
+				]
+
+	print >> filename_stats, pd.DataFrame(overall,columns=colnames, index=rownames_overall).to_string(formatters=formatter_obj)
+
+	if print_mems :
+
+		print >> filename_stats, "\n\n"
+		print >> filename_stats, "#########################################################"
+		print >> filename_stats, "#### Mono-exonic ########################################"
+
+		num_loci = len(gene_region_length_singleExon)
+		num_mRNAs = len(mRNA_region_length_singleExon)
+
+		mono = np.array(len_stats(gene_region_length_singleExon,num_loci,0))
+		mono = np.vstack([mono,len_stats(mRNA_region_length_singleExon,num_loci,num_mRNAs)])
+		mono = np.vstack([mono,count_stats(mRNA_per_gene_singleExon)])
+		mono = np.vstack([mono,len_stats(exon_region_length_singleExon,num_loci,num_mRNAs)])
+		mono = np.vstack([mono,len_stats(UTRp5_region_length_singleExon,num_loci,num_mRNAs)])
+		mono = np.vstack([mono,len_stats(UTRp3_region_length_singleExon,num_loci,num_mRNAs)])
+		mono = np.vstack([mono,len_stats(CDS_region_length_singleExon,num_loci,num_mRNAs)])
+		mono = np.vstack([mono,len_stats(mRNA_length_singleExon,num_loci,num_mRNAs)])
+		mono = np.vstack([mono,len_stats(CDS_length_singleExon,num_loci,num_mRNAs)])
+		mono = np.vstack([mono,len_stats(UTRp5_length_singleExon,num_loci,num_mRNAs)])
+		mono = np.vstack([mono,len_stats(UTRp3_length_singleExon,num_loci,num_mRNAs)])
+		mono = np.vstack([mono,len_stats(protein_length_singleExon,num_loci,num_mRNAs)])
+
+		rownames_mono = [
+					"Loci lengths",
+					"mRNAs lengths",
+					"mRNAs count/gene",
+					"Exons lengths",
+					"5' UTRs exons lengths",
+					"3' UTRs exons lengths",
+					"CDSs exons lengths",
+					"mRNAs sequences lengths",
+					"CDSs sequences lengths",
+					"5' UTRs sequences lengths",
+					"3' UTRs sequences lengths",
+					"Protein sequences lengths"
+					]
+
+		print >> filename_stats, pd.DataFrame(mono,columns=colnames, index=rownames_mono).to_string(formatters=formatter_obj)
+
+		print >> filename_stats, "\n\n"
+		print >> filename_stats, "#########################################################"
+		print >> filename_stats, "#### Multi-exonic #######################################"
+
+		num_loci = len(gene_region_length_multiExon)
+		num_mRNAs = len(mRNA_region_length_multiExon)
+
+		multi = np.array(len_stats(gene_region_length_multiExon,num_loci,0))
+		multi = np.vstack([multi,len_stats(mRNA_region_length_multiExon,num_loci,num_mRNAs)])
+		multi = np.vstack([multi,count_stats(mRNA_per_gene_multiExon)])
+		multi = np.vstack([multi,len_stats(exon_region_length_multiExon,num_loci,num_mRNAs)])
+		multi = np.vstack([multi,count_stats(exons_per_mRNA_multiExon)])
+		multi = np.vstack([multi,len_stats(UTRp5_region_length_multiExon,num_loci,num_mRNAs)])
+		multi = np.vstack([multi,count_stats(UTRp5_exons_per_mRNA_multiExon)])
+		multi = np.vstack([multi,len_stats(UTRp3_region_length_multiExon,num_loci,num_mRNAs)])
+		multi = np.vstack([multi,count_stats(UTRp3_exons_per_mRNA_multiExon)])
+		multi = np.vstack([multi,len_stats(CDS_region_length_multiExon,num_loci,num_mRNAs)])
+		multi = np.vstack([multi,count_stats(CDS_exons_per_mRNA_multiExon)])
+		multi = np.vstack([multi,len_stats(mRNA_length_multiExon,num_loci,num_mRNAs)])
+		multi = np.vstack([multi,len_stats(CDS_length_multiExon,num_loci,num_mRNAs)])
+		multi = np.vstack([multi,len_stats(UTRp5_length_multiExon,num_loci,num_mRNAs)])
+		multi = np.vstack([multi,len_stats(UTRp3_length_multiExon,num_loci,num_mRNAs)])
+		multi = np.vstack([multi,len_stats(protein_length_multiExon,num_loci,num_mRNAs)])
+
+		rownames_multi = [
+					"Loci lengths",
+					"mRNAs lengths",
+					"mRNAs count/gene",
+					"Exons lengths",
+					"Exons count/mRNA",
+					"5' UTRs exons lengths",
+					"5' UTRs exons count/mRNA",
+					"3' UTRs exons lengths",
+					"3' UTRs exons count/mRNA",
+					"CDSs exons lengths",
+					"CDSs exons count/mRNA",
+					"mRNAs sequences lengths",
+					"CDSs sequences lengths",
+					"5' UTRs sequences lengths",
+					"3' UTRs sequences lengths",
+					"Protein sequences lengths"
+					]
+
+		print >> filename_stats, pd.DataFrame(multi,columns=colnames, index=rownames_multi).to_string(formatters=formatter_obj)
+
+
+def plot_distributions( reference , length_lists , subfeat_count_list , prefix , print_mems=True ) :
+
+	prefix = str(prefix)
+	gene_region_length , mRNA_region_length , exon_region_length , UTRp5_region_length , UTRp3_region_length , CDS_region_length , intron_region_length , intergenic_region_length , mRNA_length , UTRp5_length , UTRp3_length , CDS_length , protein_length , gene_region_length_singleExon , mRNA_region_length_singleExon , exon_region_length_singleExon , UTRp5_region_length_singleExon , UTRp3_region_length_singleExon , CDS_region_length_singleExon , mRNA_length_singleExon , UTRp5_length_singleExon , UTRp3_length_singleExon , protein_length_singleExon , CDS_length_singleExon , gene_region_length_multiExon , mRNA_region_length_multiExon , exon_region_length_multiExon , UTRp5_region_length_multiExon , UTRp3_region_length_multiExon , CDS_region_length_multiExon , mRNA_length_multiExon , UTRp5_length_multiExon , UTRp3_length_multiExon , protein_length_multiExon , CDS_length_multiExon = length_lists
+	mRNA_per_gene , exons_per_mRNA , UTRp5_exons_per_mRNA , UTRp3_exons_per_mRNA , CDS_exons_per_mRNA , mRNA_per_gene_singleExon , mRNA_per_gene_multiExon , exons_per_mRNA_multiExon , CDS_exons_per_mRNA_multiExon , UTRp5_exons_per_mRNA_multiExon , UTRp3_exons_per_mRNA_multiExon , UTRp3_exons_per_mRNA_multiExon = subfeat_count_list
+
+	genome_seq_lenths = sorted([ len(reference[x].seq) for x in reference ] ,reverse=True)
+
+	with PdfPages( prefix + ".distribution.pdf") as pdf:
+		plt.style.use("ggplot")
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist(genome_seq_lenths , 200, cumulative=True, normed=True, edgecolor='#444444', color='#444444')
+		plt.title("Length of genomic sequences", fontsize=8)
+		plt.xlabel("Length (bp)" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist(gene_region_length , 50, edgecolor='#E6E6E6', color='#444444')
+		plt.title("Loci length", fontsize=8)
+		plt.xlabel("Length (bp)" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( mRNA_region_length , 50, edgecolor='#E6E6E6', color='#444444')
+		plt.title("mRNA lengths", fontsize=8)
+		plt.xlabel("Length (bp)" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( mRNA_per_gene , max( [ 1 , max(mRNA_per_gene) - min(mRNA_per_gene) ] )  , edgecolor='#E6E6E6', color='#444444')
+		plt.title("mRNAs per locus", fontsize=8)
+		plt.xlabel("Count" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( intergenic_region_length , 50, edgecolor='#E6E6E6', color='#444444')
+		plt.title("Intergenic regions length", fontsize=8)
+		plt.xlabel("Length (bp)" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( exon_region_length , 50, edgecolor='#E6E6E6', color='#444444')
+		plt.title("Exon length", fontsize=8)
+		plt.xlabel("Length (bp)" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( exons_per_mRNA , max( [ 1 , max(exons_per_mRNA)-min(exons_per_mRNA)] ) , edgecolor='#E6E6E6', color='#444444')
+		plt.title("Exon per mRNA", fontsize=8)
+		plt.xlabel("Count" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( intron_region_length , 50, edgecolor='#E6E6E6', color='#444444')
+		plt.title("Intron length", fontsize=8)
+		plt.xlabel("Length (bp)" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( UTRp5_region_length , 50, edgecolor='#E6E6E6', color='#444444')
+		plt.title("5' UTRs length", fontsize=8)
+		plt.xlabel("Length (bp)" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( UTRp5_exons_per_mRNA , max( [ 1 , max(UTRp5_exons_per_mRNA)-min(UTRp5_exons_per_mRNA) ] )  , edgecolor='#E6E6E6', color='#444444')
+		plt.title("5' UTRs per mRNA", fontsize=8)
+		plt.xlabel("Count" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( UTRp3_region_length , 50, edgecolor='#E6E6E6', color='#444444')
+		plt.title("3' UTRs length", fontsize=8)
+		plt.xlabel("Length (bp)" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( UTRp3_exons_per_mRNA , max( [ 1 , max(UTRp3_exons_per_mRNA)-min(UTRp3_exons_per_mRNA) ] ) , edgecolor='#E6E6E6', color='#444444')
+		plt.title("3' UTRs per mRNA", fontsize=8)
+		plt.xlabel("Count" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( CDS_region_length , 50, edgecolor='#E6E6E6', color='#444444')
+		plt.title("CDS length", fontsize=8)
+		plt.xlabel("Length (bp)" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( CDS_exons_per_mRNA , max( [ 1 , max(CDS_exons_per_mRNA)-min(CDS_exons_per_mRNA) ] ) , edgecolor='#E6E6E6', color='#444444')
+		plt.title("CDS per mRNA", fontsize=8)
+		plt.xlabel("Count" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( mRNA_length , 50, edgecolor='#E6E6E6', color='#444444')
+		plt.title("mRNA sequence length", fontsize=8)
+		plt.xlabel("Length (bp)" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( CDS_length , 50, edgecolor='#E6E6E6', color='#444444')
+		plt.title("Coding sequence length", fontsize=8)
+		plt.xlabel("Length (bp)" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( UTRp5_length , 50, edgecolor='#E6E6E6', color='#444444')
+		plt.title("5' UTR sequence length", fontsize=8)
+		plt.xlabel("Length (bp)" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( UTRp3_length , 50, edgecolor='#E6E6E6', color='#444444')
+		plt.title("3' UTR sequence length", fontsize=8)
+		plt.xlabel("Length (bp)" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+		plt.figure()
+		plt.xticks(fontsize=6,rotation=45)
+		plt.yticks(fontsize=6)
+		n, bins, patches = plt.hist( protein_length , 50, edgecolor='#E6E6E6', color='#444444')
+		plt.title("Protein length", fontsize=8)
+		plt.xlabel("Length (bp)" , fontsize=7 )
+		plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+		plt.close()
+
+
+	if print_mems :
+		with PdfPages(prefix+".distribution.monoexonic.pdf") as pdf:
+			plt.style.use("ggplot")
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( gene_region_length_singleExon , 50, edgecolor='#444444', color='#444444')
+			plt.title("Loci length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( mRNA_region_length_singleExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("mRNA lengths", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( mRNA_per_gene_singleExon , max( [ 1 , max(mRNA_per_gene_singleExon)-min(mRNA_per_gene_singleExon) ] ) , edgecolor='#E6E6E6', color='#444444')
+			plt.title("mRNAs per locus", fontsize=8)
+			plt.xlabel("Count" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( exon_region_length_singleExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("Exon length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( UTRp5_region_length_singleExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("5' UTRs length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( UTRp3_region_length_singleExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("3' UTRs length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( CDS_region_length_singleExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("CDS length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( mRNA_length_singleExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("mRNA sequence length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( CDS_length_singleExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("Coding sequence length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( UTRp5_length_singleExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("5' UTR sequence length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( UTRp3_length_singleExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("3' UTR sequence length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( protein_length_singleExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("Protein length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+		with PdfPages(prefix+".distribution.multiexonic.pdf") as pdf:
+			plt.style.use("ggplot")
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist(gene_region_length_multiExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("Loci length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( mRNA_region_length_multiExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("mRNA lengths", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( mRNA_per_gene_multiExon , max( [ 1 , max(mRNA_per_gene_multiExon)-min(mRNA_per_gene_multiExon) ] ) , edgecolor='#E6E6E6', color='#444444')
+			plt.title("mRNAs per locus", fontsize=8)
+			plt.xlabel("Count" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( exon_region_length_multiExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("Exon length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( exons_per_mRNA_multiExon , max( [ 1 , max(exons_per_mRNA_multiExon)-min(exons_per_mRNA_multiExon) ] ) , edgecolor='#E6E6E6', color='#444444')
+			plt.title("Exon per mRNA", fontsize=8)
+			plt.xlabel("Count" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( UTRp5_region_length_multiExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("5' UTRs length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( UTRp5_exons_per_mRNA_multiExon , max( [ 1 , max(UTRp5_exons_per_mRNA_multiExon)-min(UTRp5_exons_per_mRNA_multiExon) ] ) , edgecolor='#E6E6E6', color='#444444')
+			plt.title("5' UTRs per mRNA", fontsize=8)
+			plt.xlabel("Count" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( UTRp3_region_length_multiExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("3' UTRs length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( UTRp3_exons_per_mRNA_multiExon , max( [ 1 , max(UTRp3_exons_per_mRNA_multiExon)-min(UTRp3_exons_per_mRNA_multiExon) ] ) , edgecolor='#E6E6E6', color='#444444')
+			plt.title("3' UTRs per mRNA", fontsize=8)
+			plt.xlabel("Count" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( CDS_region_length_multiExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("CDS length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( CDS_exons_per_mRNA_multiExon , max( [ 1 , max(CDS_exons_per_mRNA_multiExon)-min(CDS_exons_per_mRNA_multiExon) ] )  , edgecolor='#E6E6E6', color='#444444')
+			plt.title("CDS per mRNA", fontsize=8)
+			plt.xlabel("Count" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( mRNA_length_multiExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("mRNA sequence length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( CDS_length_multiExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("Coding sequence length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( UTRp5_length_multiExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("5' UTR sequence length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( UTRp3_length_multiExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("3' UTR sequence length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
+			plt.figure()
+			plt.xticks(fontsize=6,rotation=45)
+			plt.yticks(fontsize=6)
+			n, bins, patches = plt.hist( protein_length_multiExon , 50, edgecolor='#E6E6E6', color='#444444')
+			plt.title("Protein length", fontsize=8)
+			plt.xlabel("Length (bp)" , fontsize=7 )
+			plt.tight_layout() ; pdf.savefig()  # saves the current figure into a pdf page
+			plt.close()
+
 
 
 def main():
@@ -148,8 +1176,6 @@ def main():
 
 	error_exon_file = open(options.prefix+".error_exon_file.txt", 'w')
 
-	no_cds_db = {}
-
 	### Add introns, check UTRs, check CDS phase, create sequences
 	## For each gene, sorted by chr : start position
 
@@ -180,8 +1206,6 @@ def main():
 		new_gene_start = ""
 		new_gene_end = ""
 
-
-
 		for m_key, m_value in sorted(genes[g_key][3].iteritems(), key=lambda (k, v): itemgetter(1)(v)) :
 			print >> sys.stderr, "------ mRNA: " + m_key
 
@@ -189,15 +1213,6 @@ def main():
 				# No CDS annotated, drop the transcript
 				print >> sys.stderr, "---- " + m_key + " -- dropped -- no CDS annotation provided"
 				print >> Dropped_mRNA_file, m_key
-				if g_key not in no_cds_db :
-					no_cds_db[g_key] = genes[g_key][:]
-					no_cds_db[g_key][3] = {}
-				try :
-					no_cds_db[g_key][3][m_key] = genes[g_key][3][m_key][:]
-				except :
-					print >> sys.stderr, genes[g_key][3].keys()
-					sys.exit(2)
-
 				del genes[g_key][3][m_key]
 				continue
 
@@ -948,11 +1963,6 @@ def main():
 	error_exon_file.close()
 	Dropped_gene_file.close()
 	Dropped_mRNA_file.close()
-
-	if not no_cds_db == {} :
-		no_cds_file = options.prefix+".no_cds.gff3"
-		write_gff3( no_cds_db , no_cds_file , reference )
-
 
 	if options.pseudo :
 		Dropped_models_file.close()
