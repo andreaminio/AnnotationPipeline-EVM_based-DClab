@@ -1,7 +1,7 @@
 indir=$(pwd)
 outdir=$1
-trimmomatic="/DATA/users/aminio/Assembly_tools/Tools/Trimmomatic-0.36/trimmomatic-0.36.jar"
-adapters="/DATA/users/aminio/Assembly_tools/Tools/Trimmomatic-0.36/adapters/TruSeq3-PE-2.fa"
+trimmomatic="Tools/Trimmomatic-0.36/trimmomatic-0.36.jar"
+adapters="Tools/Trimmomatic-0.36/adapters/TruSeq3-PE-2.fa"
 
 
 	for file in ${indir}/*.fastq.gz ; do 
