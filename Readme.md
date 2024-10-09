@@ -2,6 +2,23 @@
 
 > This Git repository contains the whole pipeline used to generate the structural and functional gene annotation of a grape genome. The pipeline for the assembly of the genome of interest is not included here but is a prerequisite.
 
+## Overview
+
+![](media/Pasted%20image%2020241009094744.png)
+
+## Pipeline
+
+- [0 - External evidences](Pipeline/0_External_evidences.md)
+- [1 - Repeat annotation](Pipeline/1_Repeat_annotation.md)
+- [2 - Training set creation](Pipeline/2_Training_set_creation.md)
+- [3 - Ab initio predictors training](Pipeline/3_Ab_initio_predictors_training.md)
+- [4 - Ab initio prediction](Pipeline/4_Ab_initio_prediction.md)
+- [5 - Evidence alignment](Pipeline/5_Evidence_alignment.md)
+- [6 - Gene models consensus call (EVM)](Pipeline/6_Gene_models_consensus_call_(EVM).md)
+- [7 - Filtering](Pipeline/7_Filtering.md)
+- [8 - Renaming](Pipeline/8_Renaming.md)
+- [9 - Functional annotation](Pipeline/9_Functional_annotation.md)
+
 ## Requirements
 
 ### Tools
@@ -76,19 +93,6 @@ Most of the tools are assumed to be installed in the `PATH`. If not, the absolut
     ├── 2_2_8-Filtering
     └── 2_2_9-Functional_annotation
 ```
-
-## Pipeline
-
-- [0 - External evidences](Pipeline/0_External_evidences.md)
-- [1 - Repeat annotation](Pipeline/1_Repeat_annotation.md)
-- [2 - Training set creation](Pipeline/2_Training_set_creation.md)
-- [3 - Ab initio predictors training](Pipeline/3_Ab_initio_predictors_training.md)
-- [4 - Ab initio prediction](Pipeline/4_Ab_initio_prediction.md)
-- [5 - Evidence alignment](Pipeline/5_Evidence_alignment.md)
-- [6 - Gene models consensus call (EVM)](Pipeline/6_Gene_models_consensus_call_(EVM).md)
-- [7 - Filtering](Pipeline/7_Filtering.md)
-- [8 - Renaming](Pipeline/8_Renaming.md)
-- [9 - Functional annotation](Pipeline/9_Functional_annotation.md)
 
 ## References
 
