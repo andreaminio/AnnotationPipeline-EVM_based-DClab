@@ -4,7 +4,7 @@
 
 ## Overview
 
-![](media/Pasted%20image%2020241009094744.png)
+![](media/Pasted%20image%2020241009100521.png)
 
 ## Pipeline
 
